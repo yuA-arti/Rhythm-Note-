@@ -405,27 +405,57 @@
                   STEP 3（入力）
                 </span>
                 <h4 class="text-sm font-bold text-slate-800">
-                  🌙 昨夜の睡眠時間
+                  🌙 睡眠時間
                 </h4>
               </div>
-              <span id="sleep-label" class="text-sm font-bold text-[#4A3B69] bg-[#F5F0FF] px-3 py-0.5 rounded-xl border border-purple-200">
-                7.0 時間
+              <span id="sleep-label" class="text-sm font-extrabold text-[#0284C7] bg-[#E0F2FE] px-3 py-0.5 rounded-xl border border-[#7DD3FC]">
+                7.0 時間（理想的）
               </span>
             </div>
 
-            <div class="bg-[#FAF7FF] rounded-2xl p-3.5 border border-purple-100 space-y-2.5">
-              <input
-                id="input-sleep"
-                type="range"
-                min="2.0"
-                max="12.0"
-                step="0.5"
-                value="7.0"
-                oninput="updateSleepValue(this.value)"
-                class="w-full accent-[#7E57C2] cursor-pointer"
-              />
-              <div id="sleep-presets" class="flex flex-wrap items-center justify-between gap-1.5">
-                <!-- JSでプリセットボタン描画 -->
+            <div class="bg-[#FAF7FF] rounded-2xl p-3.5 border border-purple-100 space-y-3.5">
+              <!-- 就寝時間・起床時間の直接入力 -->
+              <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white rounded-xl p-2.5 border border-purple-200 flex flex-col items-center">
+                  <label for="input-bedtime" class="text-[11px] font-bold text-slate-500 mb-1">
+                    就寝時間
+                  </label>
+                  <input
+                    id="input-bedtime"
+                    type="time"
+                    value="23:30"
+                    onchange="recalcSleepFromTimes()"
+                    class="text-base sm:text-lg font-extrabold text-[#4A3B69] focus:outline-none cursor-pointer"
+                  />
+                </div>
+                <div class="bg-white rounded-xl p-2.5 border border-purple-200 flex flex-col items-center">
+                  <label for="input-waketime" class="text-[11px] font-bold text-slate-500 mb-1">
+                    起床時間
+                  </label>
+                  <input
+                    id="input-waketime"
+                    type="time"
+                    value="06:30"
+                    onchange="recalcSleepFromTimes()"
+                    class="text-base sm:text-lg font-extrabold text-[#4A3B69] focus:outline-none cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              <!-- 睡眠時間の長さ＆理想度カラーバー -->
+              <div class="space-y-1.5">
+                <div class="w-full h-3.5 rounded-full bg-slate-200/80 overflow-hidden p-0.5 shadow-inner">
+                  <div
+                    id="sleep-quality-bar"
+                    class="h-full rounded-full transition-all duration-300 bg-gradient-to-r from-[#38BDF8] to-[#2563EB]"
+                    style="width: 70%"
+                  ></div>
+                </div>
+                <div class="flex justify-between text-[10px] font-bold text-slate-400 px-0.5">
+                  <span class="text-rose-500">短い（赤）</span>
+                  <span class="text-sky-600">理想的 7〜8h（青）</span>
+                  <span class="text-indigo-500">10h+</span>
+                </div>
               </div>
             </div>
           </div>
@@ -834,6 +864,8 @@
       selectedNavDate: getTodayStr(),
       formDate: getTodayStr(),
       isPeriodStart: false,
+      bedTime: '23:30',
+      wakeTime: '06:30',
       sleep: 7.0,
       manualStageOverride: false,
       manualStageValue: 'follicular',
@@ -849,6 +881,13 @@
     // ========================================================================
     // ユーティリティ
     // ========================================================================
+    function formatHourFloat(hourFloat) {
+      const normalized = ((hourFloat % 24) + 24) % 24;
+      const h = Math.floor(normalized);
+      const m = Math.round((normalized - h) * 60);
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+
     function formatDateStr(dateObj) {
       const y = dateObj.getFullYear();
       const m = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -1417,12 +1456,6 @@
     // フォームUI操作・イベントハンドラ
     // ========================================================================
     function renderFormControls() {
-      // 睡眠プリセット
-      document.getElementById('sleep-presets').innerHTML = [5.0, 6.0, 6.5, 7.0, 7.5, 8.0].map((preset) => {
-        const active = Number(state.sleep) === preset;
-        return `<button type="button" onclick="updateSleepValue(${preset})" class="px-2.5 py-1 rounded-lg text-xs font-bold border transition ${active ? 'bg-[#7E57C2] border-[#5E35B1] text-white shadow-xs' : 'bg-white border-purple-200 text-[#5E35B1] hover:bg-purple-50'}">${preset.toFixed(1)}h</button>`;
-      }).join('');
-
       // 手動時期選択
       document.getElementById('stage-manual-grid').innerHTML = Object.values(STAGES).map((st) => {
         const active = state.manualStageValue === st.id;
@@ -1469,7 +1502,11 @@
       if (existing) {
         setPeriodStart(Boolean(existing.isPeriodStart));
         document.getElementById('input-temp').value = typeof existing.temperature === 'number' ? existing.temperature.toFixed(2) : '36.35';
-        updateSleepValue(typeof existing.sleep === 'number' ? existing.sleep : 7.0);
+        state.bedTime = existing.bedTime || '23:30';
+        state.wakeTime = existing.wakeTime || '06:30';
+        document.getElementById('input-bedtime').value = state.bedTime;
+        document.getElementById('input-waketime').value = state.wakeTime;
+        updateSleepDisplay(typeof existing.sleep === 'number' ? existing.sleep : 7.0);
         setManualStageOverride(Boolean(existing.manualStageOverride));
         state.manualStageValue = existing.stage || 'follicular';
 
@@ -1487,7 +1524,11 @@
       } else {
         setPeriodStart(false);
         document.getElementById('input-temp').value = '36.35';
-        updateSleepValue(7.0);
+        state.bedTime = '23:30';
+        state.wakeTime = '06:30';
+        document.getElementById('input-bedtime').value = '23:30';
+        document.getElementById('input-waketime').value = '06:30';
+        updateSleepDisplay(7.0);
         setManualStageOverride(false);
         state.manualStageValue = 'follicular';
         state.mood = 3;
@@ -1508,7 +1549,7 @@
       const mBadge = document.getElementById('morning-saved-badge');
       const tempVal = document.getElementById('input-temp').value;
       if (state.morningSavedFlag) {
-        mBadge.textContent = `☀️ 記録済み（${tempVal}℃ / 睡眠 ${Number(state.sleep).toFixed(1)}h）`;
+        mBadge.textContent = `☀️ 記録済み（${tempVal}℃ / ${formatHourFloat(state.bedtime)}〜${formatHourFloat(state.waketime)}・${Number(state.sleep).toFixed(1)}h）`;
         mBadge.classList.remove('hidden');
       } else {
         mBadge.classList.add('hidden');
@@ -1659,11 +1700,50 @@
       el.value = Math.max(34.5, Math.min(41.0, base + delta)).toFixed(2);
     }
 
-    function updateSleepValue(val) {
-      state.sleep = parseFloat(val);
-      document.getElementById('input-sleep').value = state.sleep;
-      document.getElementById('sleep-label').textContent = `${state.sleep.toFixed(1)} 時間`;
-      renderFormControls();
+    function recalcSleepFromTimes() {
+      const bedEl = document.getElementById('input-bedtime');
+      const wakeEl = document.getElementById('input-waketime');
+      if (!bedEl || !wakeEl || !bedEl.value || !wakeEl.value) return;
+
+      state.bedTime = bedEl.value;
+      state.wakeTime = wakeEl.value;
+
+      const [bh, bm] = state.bedTime.split(':').map(Number);
+      const [wh, wm] = state.wakeTime.split(':').map(Number);
+      let diffMins = (wh * 60 + wm) - (bh * 60 + bm);
+      if (diffMins <= 0) {
+        diffMins += 24 * 60;
+      }
+      const hours = Number((diffMins / 60).toFixed(1));
+      updateSleepDisplay(hours);
+    }
+
+    function updateSleepDisplay(hours) {
+      state.sleep = hours;
+      const labelEl = document.getElementById('sleep-label');
+      const barEl = document.getElementById('sleep-quality-bar');
+      if (!labelEl || !barEl) return;
+
+      const pct = Math.max(8, Math.min(100, Math.round((hours / 10) * 100)));
+      barEl.style.width = `${pct}%`;
+
+      if (hours < 5.5) {
+        labelEl.textContent = `${hours.toFixed(1)} 時間（短め）`;
+        labelEl.className = 'text-sm font-extrabold text-rose-700 bg-rose-100 px-3 py-0.5 rounded-xl border border-rose-300';
+        barEl.className = 'h-full rounded-full transition-all duration-300 bg-gradient-to-r from-[#F43F5E] to-[#E11D48]';
+      } else if (hours < 6.5) {
+        labelEl.textContent = `${hours.toFixed(1)} 時間（やや短め）`;
+        labelEl.className = 'text-sm font-extrabold text-amber-700 bg-amber-100 px-3 py-0.5 rounded-xl border border-amber-300';
+        barEl.className = 'h-full rounded-full transition-all duration-300 bg-gradient-to-r from-[#FB7185] to-[#F59E0B]';
+      } else if (hours <= 8.5) {
+        labelEl.textContent = `${hours.toFixed(1)} 時間（理想的）`;
+        labelEl.className = 'text-sm font-extrabold text-[#0284C7] bg-[#E0F2FE] px-3 py-0.5 rounded-xl border border-[#7DD3FC]';
+        barEl.className = 'h-full rounded-full transition-all duration-300 bg-gradient-to-r from-[#38BDF8] to-[#2563EB]';
+      } else {
+        labelEl.textContent = `${hours.toFixed(1)} 時間（たっぷり）`;
+        labelEl.className = 'text-sm font-extrabold text-indigo-700 bg-indigo-100 px-3 py-0.5 rounded-xl border border-indigo-300';
+        barEl.className = 'h-full rounded-full transition-all duration-300 bg-gradient-to-r from-[#3B82F6] to-[#7C3AED]';
+      }
     }
 
     function setManualStageOverride(isManual) {
@@ -1757,6 +1837,8 @@
         temperature: validTemp,
         mood: keepEvening ? existing.mood : null,
         energy: keepEvening ? existing.energy : null,
+        bedTime: state.bedTime,
+        wakeTime: state.wakeTime,
         sleep: Number(state.sleep),
         morningSaved: true,
         eveningSaved: keepEvening,
@@ -1793,6 +1875,8 @@
         temperature: validTemp,
         mood: Number(state.mood),
         energy: Number(state.energy),
+        bedTime: state.bedTime,
+        wakeTime: state.wakeTime,
         sleep: Number(state.sleep),
         morningSaved: Boolean(existing?.morningSaved || validTemp),
         eveningSaved: true,
