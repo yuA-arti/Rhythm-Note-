@@ -14,12 +14,36 @@
     }
   </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-[#F8F5FF] via-[#FDF7FA] to-[#F2ECFF] text-slate-800 pb-16">
+<body class="min-h-screen bg-gradient-to-br from-[#F8F5FF] via-[#FDF7FA] to-[#F2ECFF] text-slate-800 pb-28">
 
   <!-- トースト通知 -->
-  <div id="toast" class="hidden fixed bottom-5 right-5 z-50 flex items-center gap-2.5 bg-[#4A3B69] text-white px-4 py-3 rounded-2xl shadow-lg border border-purple-300/40 text-xs sm:text-sm font-medium">
+  <div id="toast" class="hidden fixed bottom-20 left-4 right-4 sm:left-auto sm:right-5 z-50 flex items-center justify-center sm:justify-start gap-2.5 bg-[#4A3B69] text-white px-4 py-3 rounded-2xl shadow-lg border border-purple-300/40 text-xs sm:text-sm font-medium">
     <span class="text-[#F8BBD0]">✓</span>
     <span id="toast-text"></span>
+  </div>
+
+  <!-- スマホ操作用：画面下部の固定保存バー -->
+  <div id="sticky-save-bar" class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-purple-200 px-4 py-3 shadow-[0_-4px_16px_rgba(74,59,105,0.08)]">
+    <div class="max-w-5xl mx-auto flex items-center gap-2.5">
+      <button
+        type="button"
+        id="sticky-btn-morning"
+        onclick="saveMorning()"
+        class="flex-1 py-3 px-3 rounded-2xl bg-gradient-to-r from-[#F48FB1] to-[#9575CD] text-white font-extrabold text-xs sm:text-sm shadow-xs active:scale-[0.98] transition flex items-center justify-center gap-1.5"
+      >
+        <span>☀️</span>
+        <span>Morningを保存</span>
+      </button>
+      <button
+        type="button"
+        id="sticky-btn-evening"
+        onclick="handleStickyEveningClick()"
+        class="flex-1 py-3 px-3 rounded-2xl bg-gradient-to-r from-[#7E57C2] to-[#5E35B1] text-white font-extrabold text-xs sm:text-sm shadow-xs active:scale-[0.98] transition flex items-center justify-center gap-1.5"
+      >
+        <span>🌙</span>
+        <span id="sticky-evening-label">夜の振り返り</span>
+      </button>
+    </div>
   </div>
 
   <!-- ヘッダー＆ナビゲーション -->
@@ -579,6 +603,7 @@
             <!-- 夜の振り返り保存ボタン -->
             <button
               type="submit"
+              id="form-submit-evening"
               class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#7E57C2] to-[#5E35B1] text-white font-extrabold text-sm shadow-sm hover:opacity-95 transition flex items-center justify-center gap-2"
             >
               <span>🌙</span>
@@ -1511,13 +1536,29 @@
 
       const eBody = document.getElementById('evening-body');
       const eToggleBtn = document.getElementById('btn-toggle-evening');
+      const stickyEveningLabel = document.getElementById('sticky-evening-label');
       if (state.eveningSectionOpen) {
         eBody.classList.remove('hidden');
         eToggleBtn.textContent = '閉じる ▲';
+        if (stickyEveningLabel) stickyEveningLabel.textContent = '夜の振り返りを保存';
       } else {
         eBody.classList.add('hidden');
         eToggleBtn.textContent = '開いて入力する ▼';
+        if (stickyEveningLabel) stickyEveningLabel.textContent = '夜の振り返り入力';
       }
+    }
+
+    function handleStickyEveningClick() {
+      if (!state.eveningSectionOpen) {
+        state.eveningSectionOpen = true;
+        updateSavedBadgesAndVisibility();
+        const eBody = document.getElementById('evening-body');
+        if (eBody) {
+          eBody.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+      saveEvening();
     }
 
     function switchTab(tab) {
@@ -1526,15 +1567,18 @@
       const insView = document.getElementById('view-insights');
       const btnHome = document.getElementById('tab-btn-home');
       const btnIns = document.getElementById('tab-btn-insights');
+      const stickyBar = document.getElementById('sticky-save-bar');
 
       if (tab === 'home') {
         homeView.classList.remove('hidden');
         insView.classList.add('hidden');
+        if (stickyBar) stickyBar.classList.remove('hidden');
         btnHome.className = 'px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 bg-white text-[#5E35B1] shadow-xs';
         btnIns.className = 'px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 text-[#7E57C2] hover:text-[#4A3B69]';
       } else {
         homeView.classList.add('hidden');
         insView.classList.remove('hidden');
+        if (stickyBar) stickyBar.classList.add('hidden');
         btnIns.className = 'px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 bg-white text-[#5E35B1] shadow-xs';
         btnHome.className = 'px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 text-[#7E57C2] hover:text-[#4A3B69]';
       }
@@ -1736,7 +1780,9 @@
     }
 
     function saveEvening(e) {
-      e.preventDefault();
+      if (e && typeof e.preventDefault === 'function') {
+        e.preventDefault();
+      }
       const parsedTemp = parseFloat(document.getElementById('input-temp').value);
       const validTemp = !isNaN(parsedTemp) && parsedTemp >= 34.0 && parsedTemp <= 42.0 ? Number(parsedTemp.toFixed(2)) : null;
       const existing = state.records.find((r) => r.date === state.formDate);
