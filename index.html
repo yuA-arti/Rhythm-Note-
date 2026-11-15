@@ -73,7 +73,7 @@
           >
             ⚙️
           </button>
-          <div id="data-menu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-purple-100 py-2 z-40 text-xs">
+          <div id="data-menu" class="hidden absolute right-0 mt-2 w-60 bg-white rounded-2xl shadow-xl border border-purple-100 py-2 z-40 text-xs">
             <button
               type="button"
               onclick="exportCSV()"
@@ -84,11 +84,11 @@
             </button>
             <button
               type="button"
-              onclick="restoreSample()"
-              class="w-full px-4 py-2.5 text-left hover:bg-purple-50 flex items-center gap-2 text-slate-700 font-medium"
+              onclick="clearAllRecords()"
+              class="w-full px-4 py-2.5 text-left hover:bg-rose-50 flex items-center gap-2 text-rose-600 font-bold"
             >
-              <span>🔄</span>
-              <span>サンプルデータ(35日分)を復元</span>
+              <span>🗑️</span>
+              <span>すべての記録データを削除</span>
             </button>
           </div>
         </div>
@@ -105,14 +105,14 @@
     <div id="view-home" class="space-y-6">
 
       <!-- 1. 今日のメカニズム解説 ＆ 気づきナビカード -->
-      <section id="nav-card" class="rounded-3xl p-5 sm:p-6 bg-white/95 border-2 border-[#B2DFDB] shadow-sm transition-all">
+      <section id="nav-card" class="rounded-3xl p-5 sm:p-6 bg-white/95 border-2 border-purple-200 shadow-sm transition-all">
         <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-purple-100">
           <div class="flex flex-wrap items-center gap-2">
             <span id="nav-date-badge" class="px-3 py-1 rounded-full bg-[#F3E8FF] text-[#5E35B1] text-xs font-bold">
               --
             </span>
-            <span id="nav-stage-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-[#E0F2F1] text-[#00695C]">
-              --
+            <span id="nav-stage-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500">
+              未記録
             </span>
             <span id="nav-avg-cycle" class="text-[11px] text-slate-400">
               ※平均周期 28日基準
@@ -129,7 +129,19 @@
           </button>
         </div>
 
-        <div class="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- データ未登録時のシンプル案内表示 -->
+        <div id="nav-empty-state" class="py-8 text-center space-y-2">
+          <div class="text-2xl">🌸</div>
+          <p class="text-sm sm:text-base font-bold text-[#4A3B69]">
+            まだ記録がありません
+          </p>
+          <p class="text-xs sm:text-sm text-slate-500">
+            下の「毎日の記録ノート」から入力すると、現在の体のリズムや解説が表示されます。
+          </p>
+        </div>
+
+        <!-- データ登録済みの解説＆診断表示 -->
+        <div id="nav-content-grid" class="hidden mt-4 grid-cols-1 lg:grid-cols-3 gap-4">
           <!-- 身体のメカニズム解説 -->
           <div class="lg:col-span-2 space-y-2.5">
             <h2 id="nav-summary" class="text-base sm:text-lg font-extrabold text-[#4A3B69]">
@@ -844,73 +856,6 @@
     }
 
     // ========================================================================
-    // サンプルデータ生成（35日分）
-    // ========================================================================
-    function createInitialSampleRecords() {
-      const today = new Date();
-      const rawPattern = [
-        { offset: -34, temp: 36.32, mood: 2, energy: 2, sleep: 7.5, periodStart: true, cond: ['腹痛・下腹部痛', '強い眠気'], care: ['湯船に浸かった', '温かい飲み物'], memo: '生理1日目。無理せず早めに休んだ。' },
-        { offset: -33, temp: 36.25, mood: 2, energy: 2, sleep: 8.0, periodStart: false, cond: ['腹痛・下腹部痛', '頭痛・重だるさ'], care: ['早めに就寝した', '鉄分・栄養意識'], memo: '2日目で少し重だるい。' },
-        { offset: -32, temp: 36.22, mood: 3, energy: 3, sleep: 7.0, periodStart: false, cond: ['強い眠気'], care: ['温かい飲み物'], memo: '少しずつ落ち着いてきた。' },
-        { offset: -31, temp: 36.28, mood: 3, energy: 3, sleep: 7.0, periodStart: false, cond: [], care: ['ストレッチ・ヨガ'], memo: '' },
-        { offset: -30, temp: 36.24, mood: 4, energy: 4, sleep: 7.5, periodStart: false, cond: ['快調・スッキリ'], care: ['ウォーキング・運動'], memo: '生理終わりかけでスッキリ！' },
-        { offset: -29, temp: 36.20, mood: 4, energy: 4, sleep: 7.0, periodStart: false, cond: ['快調・スッキリ'], care: ['ストレッチ・ヨガ', '好きな音楽・趣味'], memo: '' },
-        { offset: -28, temp: 36.18, mood: 5, energy: 5, sleep: 7.5, periodStart: false, cond: ['快調・スッキリ'], care: ['ウォーキング・運動', '湯船に浸かった'], memo: '朝から頭が冴えて仕事が捗った。' },
-        { offset: -27, temp: 36.21, mood: 4, energy: 4, sleep: 7.0, periodStart: false, cond: ['快調・スッキリ'], care: ['好きな音楽・趣味'], memo: '' },
-        { offset: -26, temp: 36.19, mood: 2, energy: 2, sleep: 5.0, periodStart: false, cond: ['イライラ気味', '仕事・家事疲れ', '睡眠不足感'], care: [], memo: '卵胞期なのに寝不足と残業でイライラしてしまった。' },
-        { offset: -25, temp: 36.23, mood: 4, energy: 4, sleep: 8.0, periodStart: false, cond: ['快調・スッキリ'], care: ['早めに就寝した', '湯船に浸かった'], memo: 'しっかり寝たらすぐ回復！' },
-        { offset: -24, temp: 36.17, mood: 5, energy: 5, sleep: 7.5, periodStart: false, cond: ['快調・スッキリ'], care: ['ウォーキング・運動'], memo: '' },
-        { offset: -23, temp: 36.15, mood: 4, energy: 4, sleep: 7.0, periodStart: false, cond: [], care: ['ストレッチ・ヨガ'], memo: '' },
-        { offset: -22, temp: 36.08, mood: 3, energy: 3, sleep: 6.5, periodStart: false, cond: ['強い眠気'], care: ['温かい飲み物'], memo: '体温がガクッと下がった日。' },
-        { offset: -21, temp: 36.38, mood: 4, energy: 3, sleep: 7.0, periodStart: false, cond: [], care: ['湯船に浸かった'], memo: '体温が上がり始めた。' },
-        { offset: -20, temp: 36.56, mood: 4, energy: 4, sleep: 7.5, periodStart: false, cond: ['快調・スッキリ'], care: ['ストレッチ・ヨガ'], memo: '高温期入り。' },
-        { offset: -19, temp: 36.64, mood: 4, energy: 3, sleep: 7.0, periodStart: false, cond: [], care: ['カフェイン控えめ'], memo: '' },
-        { offset: -18, temp: 36.68, mood: 3, energy: 3, sleep: 7.0, periodStart: false, cond: ['むくみ'], care: ['湯船に浸かった'], memo: '' },
-        { offset: -17, temp: 36.71, mood: 3, energy: 3, sleep: 6.5, periodStart: false, cond: ['強い眠気'], care: ['早めに就寝した'], memo: '' },
-        { offset: -16, temp: 36.66, mood: 3, energy: 3, sleep: 7.0, periodStart: false, cond: [], care: ['好きな音楽・趣味'], memo: '' },
-        { offset: -15, temp: 36.73, mood: 3, energy: 2, sleep: 6.5, periodStart: false, cond: ['むくみ', '食欲増加・甘いもの欲'], care: ['カフェイン控えめ'], memo: 'チョコが食べたくなる時期。' },
-        { offset: -14, temp: 36.75, mood: 2, energy: 2, sleep: 6.5, periodStart: false, cond: ['イライラ気味', '強い眠気'], care: ['湯船に浸かった'], memo: '生理5日前くらいから少しソワソワ。' },
-        { offset: -13, temp: 36.70, mood: 2, energy: 2, sleep: 6.0, periodStart: false, cond: ['イライラ気味', 'むくみ'], care: ['ストレッチ・ヨガ'], memo: '高温期後半でちょっとしたことでイラッとする。' },
-        { offset: -12, temp: 36.74, mood: 1, energy: 2, sleep: 6.0, periodStart: false, cond: ['イライラ気味', '気分の落ち込み', '肌荒れ'], care: ['早めに就寝した'], memo: 'PMSピーク。ホルモンのせいと割り切って早めに寝る。' },
-        { offset: -11, temp: 36.69, mood: 2, energy: 2, sleep: 7.5, periodStart: false, cond: ['気分の落ち込み', '強い眠気'], care: ['温かい飲み物', '好きな音楽・趣味'], memo: '' },
-        { offset: -10, temp: 36.62, mood: 2, energy: 2, sleep: 7.0, periodStart: false, cond: ['頭痛・重だるさ', 'むくみ'], care: ['湯船に浸かった'], memo: '' },
-        { offset: -9, temp: 36.45, mood: 3, energy: 3, sleep: 7.5, periodStart: false, cond: [], care: ['早めに就寝した'], memo: '体温が下がり始めた。もうすぐ生理かも。' },
-        { offset: -8, temp: 36.29, mood: 2, energy: 2, sleep: 7.5, periodStart: true, cond: ['腹痛・下腹部痛', '強い眠気'], care: ['湯船に浸かった', '温かい飲み物'], memo: '今周期の生理スタート！予測通り。' },
-        { offset: -7, temp: 36.24, mood: 2, energy: 2, sleep: 8.0, periodStart: false, cond: ['腹痛・下腹部痛'], care: ['早めに就寝した', '鉄分・栄養意識'], memo: '' },
-        { offset: -6, temp: 36.21, mood: 3, energy: 3, sleep: 7.0, periodStart: false, cond: [], care: ['温かい飲み物'], memo: '' },
-        { offset: -5, temp: 36.25, mood: 4, energy: 4, sleep: 7.5, periodStart: false, cond: ['快調・スッキリ'], care: ['ストレッチ・ヨガ'], memo: '' },
-        { offset: -4, temp: 36.19, mood: 4, energy: 4, sleep: 7.0, periodStart: false, cond: ['快調・スッキリ'], care: ['ウォーキング・運動'], memo: '卵胞期に入って調子が良い！' },
-        { offset: -3, temp: 36.16, mood: 5, energy: 5, sleep: 7.5, periodStart: false, cond: ['快調・スッキリ'], care: ['湯船に浸かった', '好きな音楽・趣味'], memo: '' },
-        { offset: -2, temp: 36.20, mood: 2, energy: 3, sleep: 5.5, periodStart: false, cond: ['イライラ気味', '睡眠不足感'], care: [], memo: '夜ふかしして睡眠5.5時間。卵胞期なのにイライラ気味。' },
-        { offset: -1, temp: 36.18, mood: 4, energy: 4, sleep: 7.5, periodStart: false, cond: ['快調・スッキリ'], care: ['早めに就寝した', 'ストレッチ・ヨガ'], memo: '7.5時間寝たら気分もすっきり回復！' },
-        { offset: 0, temp: 36.22, mood: 4, energy: 4, sleep: 7.0, periodStart: false, cond: ['快調・スッキリ'], care: ['温かい飲み物'], memo: '' },
-      ];
-
-      return rawPattern.map((item) => {
-        const d = new Date(today);
-        d.setDate(today.getDate() + item.offset);
-        const dateStr = formatDateStr(d);
-        const isToday = item.offset === 0;
-        return {
-          id: dateStr,
-          date: dateStr,
-          temperature: item.temp,
-          mood: isToday ? null : item.mood,
-          energy: isToday ? null : item.energy,
-          sleep: item.sleep,
-          morningSaved: true,
-          eveningSaved: !isToday,
-          isPeriodStart: item.periodStart,
-          manualStageOverride: false,
-          stage: 'follicular',
-          conditionTags: isToday ? [] : item.cond,
-          selfCareTags: isToday ? [] : item.care,
-          memo: isToday ? '' : item.memo,
-        };
-      });
-    }
-
-    // ========================================================================
     // 自動フェーズ・周期分析エンジン
     // ========================================================================
     function analyzeRecords(records) {
@@ -1123,22 +1068,41 @@
         analysis.enriched[analysis.enriched.length - 1] ||
         null;
 
-      const stageInfo = activeRec ? STAGES[activeRec.effectiveStage] || STAGES.follicular : STAGES.follicular;
       const card = document.getElementById('nav-card');
-      card.style.borderColor = stageInfo.borderHex;
+      const stageBadge = document.getElementById('nav-stage-badge');
+      const emptyState = document.getElementById('nav-empty-state');
+      const contentGrid = document.getElementById('nav-content-grid');
 
       document.getElementById('nav-date-badge').textContent = `📅 ${activeRec?.date || getTodayStr()}${activeRec?.cycleDay ? `（周期 ${activeRec.cycleDay}日目）` : ''}`;
-      const stageBadge = document.getElementById('nav-stage-badge');
+      document.getElementById('nav-avg-cycle').textContent = `※平均周期 ${analysis.avgCycleLength}日基準`;
+
+      // 記録が1件もない場合は「まだ記録がありません」のみを表示
+      if (!activeRec) {
+        card.style.borderColor = '#E9D5FF';
+        stageBadge.textContent = '未記録';
+        stageBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500';
+        emptyState.classList.remove('hidden');
+        contentGrid.classList.add('hidden');
+        contentGrid.classList.remove('grid');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      contentGrid.classList.remove('hidden');
+      contentGrid.classList.add('grid');
+
+      const stageInfo = STAGES[activeRec.effectiveStage] || STAGES.follicular;
+      card.style.borderColor = stageInfo.borderHex;
+
       stageBadge.textContent = `${stageInfo.name}・${stageInfo.tempPhase}`;
       stageBadge.className = `px-3 py-1 rounded-full text-xs font-bold ${stageInfo.badgeBg} ${stageInfo.badgeText}`;
-      document.getElementById('nav-avg-cycle').textContent = `※平均周期 ${analysis.avgCycleLength}日基準`;
 
       document.getElementById('nav-summary').textContent = stageInfo.summary;
       document.getElementById('nav-mechanism').textContent = stageInfo.mechanism;
       document.getElementById('nav-advice').textContent = stageInfo.advice;
 
       const gapBox = document.getElementById('nav-gap-box');
-      if (activeRec?.isGapDay) {
+      if (activeRec.isGapDay) {
         gapBox.innerHTML = `
           <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEF3C7] text-[#B45309] text-xs font-bold">
             <span>⚠️</span><span>リズムとのギャップを検出</span>
@@ -1150,7 +1114,7 @@
             ホルモンの波ではなく、<strong>睡眠不足（${activeRec.sleep}h）や日常の疲れ・ストレス</strong>など別の要因が影響しているサインかもしれません。
           </p>
         `;
-      } else if (activeRec?.effectiveStage === 'luteal' && typeof activeRec.mood === 'number' && activeRec.mood <= 2) {
+      } else if (activeRec.effectiveStage === 'luteal' && typeof activeRec.mood === 'number' && activeRec.mood <= 2) {
         gapBox.innerHTML = `
           <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F3E5F5] text-[#6A1B9A] text-xs font-bold">
             <span>ℹ️</span><span>体のメカニズム通りの反応</span>
@@ -1173,9 +1137,9 @@
         `;
       }
 
-      document.getElementById('nav-stat-temp').textContent = typeof activeRec?.temperature === 'number' ? `${activeRec.temperature.toFixed(2)}℃` : '--';
-      document.getElementById('nav-stat-sleep').textContent = typeof activeRec?.sleep === 'number' ? `${activeRec.sleep.toFixed(1)}h` : '--';
-      document.getElementById('nav-stat-mood').textContent = typeof activeRec?.mood === 'number' ? `${activeRec.mood} / 5` : '夜に入力';
+      document.getElementById('nav-stat-temp').textContent = typeof activeRec.temperature === 'number' ? `${activeRec.temperature.toFixed(2)}℃` : '--';
+      document.getElementById('nav-stat-sleep').textContent = typeof activeRec.sleep === 'number' ? `${activeRec.sleep.toFixed(1)}h` : '--';
+      document.getElementById('nav-stat-mood').textContent = typeof activeRec.mood === 'number' ? `${activeRec.mood} / 5` : '夜に入力';
     }
 
     function renderChart(analysis) {
@@ -1183,7 +1147,7 @@
       const data = state.chartRange === 'all' ? analysis.enriched : analysis.enriched.slice(-Number(state.chartRange));
 
       if (!data || data.length === 0) {
-        container.innerHTML = `<div class="h-64 flex items-center justify-center text-sm text-purple-400 bg-purple-50/40 rounded-2xl border border-purple-100">表示するデータがありません。</div>`;
+        container.innerHTML = `<div class="h-56 flex items-center justify-center text-xs sm:text-sm text-purple-400 bg-purple-50/40 rounded-2xl border border-purple-100">記録が追加されると、ここにバイオリズムグラフが表示されます。</div>`;
         return;
       }
 
@@ -1296,6 +1260,11 @@
       const listEl = document.getElementById('history-list');
       const items = [...analysis.enriched].reverse().slice(0, 10);
 
+      if (items.length === 0) {
+        listEl.innerHTML = `<div class="py-6 text-center text-xs sm:text-sm text-slate-400">まだ記録がありません。</div>`;
+        return;
+      }
+
       listEl.innerHTML = items.map((r) => {
         const st = STAGES[r.effectiveStage] || STAGES.follicular;
         const moodObj = MOOD_OPTIONS.find((m) => m.value === r.mood);
@@ -1331,10 +1300,13 @@
     }
 
     function renderInsights(analysis) {
-      document.getElementById('ins-avg-cycle').textContent = `${analysis.avgCycleLength} 日`;
+      const hasAnyData = analysis.enriched.length > 0;
+      document.getElementById('ins-avg-cycle').textContent = hasAnyData ? `${analysis.avgCycleLength} 日` : '--';
       document.getElementById('ins-temp-diff').textContent = analysis.tempDiff !== null ? `+${analysis.tempDiff.toFixed(2)} ℃` : '計測中';
-      document.getElementById('ins-pms-start').textContent = analysis.pmsStartCandidate ? `生理 ${analysis.pmsStartCandidate.daysBefore}日前〜` : '安定傾向';
-      document.getElementById('ins-gap-count').textContent = `${analysis.gapDays.length} 日検出`;
+      document.getElementById('ins-pms-start').textContent = hasAnyData
+        ? (analysis.pmsStartCandidate ? `生理 ${analysis.pmsStartCandidate.daysBefore}日前〜` : 'データ蓄積中')
+        : '--';
+      document.getElementById('ins-gap-count').textContent = hasAnyData ? `${analysis.gapDays.length} 日検出` : '--';
 
       const pmsBanner = document.getElementById('ins-pms-banner');
       if (analysis.pmsStartCandidate) {
@@ -1387,7 +1359,7 @@
           </div>
         `).join('');
       } else {
-        gapEl.innerHTML = `<div class="p-4 rounded-2xl bg-[#FAF7FF] text-xs text-slate-500">現在、卵胞期における大きなギャップ不調は検出されていません。</div>`;
+        gapEl.innerHTML = `<div class="p-4 rounded-2xl bg-[#FAF7FF] text-xs text-slate-500">記録が増えると、卵胞期の不調要因がここに表示されます。</div>`;
       }
 
       document.getElementById('ins-stage-cards').innerHTML = analysis.stageStats.map((st) => `
@@ -1811,6 +1783,14 @@
       showToast(`${dateStr} の記録を削除しました`);
     }
 
+    function clearAllRecords() {
+      state.selectedNavDate = getTodayStr();
+      persistRecords([]);
+      syncFormFromDate(getTodayStr());
+      document.getElementById('data-menu').classList.add('hidden');
+      showToast('すべての記録データを削除しました');
+    }
+
     function exportCSV() {
       const analysis = analyzeRecords(state.records);
       const header = ['日付', '周期日数', '体の時期', '生理開始日', '基礎体温', '睡眠時間', '気分(1-5)', '元気度(1-5)', '体調サイン', 'セルフケア', 'メモ'];
@@ -1839,36 +1819,20 @@
       showToast('CSVファイルをダウンロードしました');
     }
 
-    function restoreSample() {
-      const sample = createInitialSampleRecords();
-      state.selectedNavDate = getTodayStr();
-      persistRecords(sample);
-      syncFormFromDate(getTodayStr());
-      document.getElementById('data-menu').classList.add('hidden');
-      showToast('35日分のサンプルデータを復元しました');
-    }
-
     // ========================================================================
-    // 初期化
+    // 初期化（初回起動時は空の状態でスタート）
     // ========================================================================
     window.addEventListener('DOMContentLoaded', () => {
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (Array.isArray(parsed)) {
             state.records = parsed;
           }
         }
       } catch (e) {
         console.error(e);
-      }
-
-      if (state.records.length === 0) {
-        state.records = createInitialSampleRecords();
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(state.records));
-        } catch (e) {}
       }
 
       syncFormFromDate(getTodayStr());
