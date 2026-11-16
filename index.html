@@ -17,13 +17,13 @@
 <body class="min-h-screen bg-gradient-to-br from-[#F8F5FF] via-[#FDF7FA] to-[#F2ECFF] text-slate-800 pb-28">
 
   <!-- トースト通知 -->
-  <div id="toast" class="hidden fixed bottom-20 left-4 right-4 sm:left-auto sm:right-5 z-50 flex items-center justify-center sm:justify-start gap-2.5 bg-[#4A3B69] text-white px-4 py-3 rounded-2xl shadow-lg border border-purple-300/40 text-xs sm:text-sm font-medium">
+  <div id="toast" class="hidden fixed bottom-20 right-4 z-50 flex items-center gap-2.5 bg-[#4A3B69] text-white px-4 py-3 rounded-2xl shadow-lg border border-purple-300/40 text-xs sm:text-sm font-medium">
     <span class="text-[#F8BBD0]">✓</span>
-    <span id="toast-text"></span>
+    <span id="toast-text">保存しました</span>
   </div>
 
-  <!-- スマホ操作用：画面下部の固定保存バー -->
-  <div id="sticky-save-bar" class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-purple-200 px-4 py-3 shadow-[0_-4px_16px_rgba(74,59,105,0.08)]">
+  <!-- スマホ操作用：画面下部の固定保存バー（「記録」タブ表示時のみ表示） -->
+  <div id="sticky-save-bar" class="hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-purple-200 px-4 py-3 shadow-[0_-4px_16px_rgba(74,59,105,0.08)]">
     <div class="max-w-5xl mx-auto flex items-center gap-2.5">
       <button
         type="button"
@@ -41,7 +41,7 @@
         class="flex-1 py-3 px-3 rounded-2xl bg-gradient-to-r from-[#7E57C2] to-[#5E35B1] text-white font-extrabold text-xs sm:text-sm shadow-xs active:scale-[0.98] transition flex items-center justify-center gap-1.5"
       >
         <span>🌙</span>
-        <span id="sticky-evening-label">夜の振り返り</span>
+        <span id="sticky-evening-label">Nightを入力</span>
       </button>
     </div>
   </div>
@@ -64,23 +64,32 @@
         </div>
       </div>
 
-      <!-- タブ切り替え＆メニュー -->
+      <!-- タブ切り替え（ホーム / 記録 / 傾向分析）＆メニュー -->
       <div class="flex items-center gap-2">
         <div class="flex bg-[#F3E8FF] p-1 rounded-2xl border border-purple-200/70">
           <button
             type="button"
             id="tab-btn-home"
             onclick="switchTab('home')"
-            class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 bg-white text-[#5E35B1] shadow-xs"
+            class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1 bg-white text-[#5E35B1] shadow-xs"
           >
             <span>♥</span>
-            <span>ホーム・記録</span>
+            <span>ホーム</span>
+          </button>
+          <button
+            type="button"
+            id="tab-btn-record"
+            onclick="switchTab('record')"
+            class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1 text-[#7E57C2] hover:text-[#4A3B69]"
+          >
+            <span>✎</span>
+            <span>記録</span>
           </button>
           <button
             type="button"
             id="tab-btn-insights"
             onclick="switchTab('insights')"
-            class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 text-[#7E57C2] hover:text-[#4A3B69]"
+            class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1 text-[#7E57C2] hover:text-[#4A3B69]"
           >
             <span>📈</span>
             <span>傾向分析</span>
@@ -124,11 +133,11 @@
   <main class="max-w-5xl mx-auto px-4 pt-5 space-y-6">
 
     <!-- ==================================================================
-         ホーム・記録タブ
+         1. ホームタブ（バロメーター確認・解説・履歴閲覧に特化）
          ================================================================== -->
     <div id="view-home" class="space-y-6">
 
-      <!-- 1. 今日のメカニズム解説 ＆ 気づきナビカード -->
+      <!-- 今日のメカニズム解説 ＆ 気づきナビカード -->
       <section id="nav-card" class="rounded-3xl p-5 sm:p-6 bg-white/95 border-2 border-purple-200 shadow-sm transition-all">
         <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-purple-100">
           <div class="flex flex-wrap items-center gap-2">
@@ -142,15 +151,6 @@
               ※平均周期 28日基準
             </span>
           </div>
-
-          <button
-            type="button"
-            onclick="scrollToForm()"
-            class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#7E57C2] to-[#EC407A] text-white text-xs font-bold shadow-xs hover:opacity-95 transition flex items-center gap-1"
-          >
-            <span>✎</span>
-            <span>今日の記録を入力する</span>
-          </button>
         </div>
 
         <!-- データ未登録時のシンプル案内表示 -->
@@ -160,7 +160,7 @@
             まだ記録がありません
           </p>
           <p class="text-xs sm:text-sm text-slate-500">
-            下の「毎日の記録ノート」から入力すると、現在の体のリズムや解説が表示されます。
+            上の「記録」タブから入力すると、現在の体のリズムや解説が表示されます。
           </p>
         </div>
 
@@ -208,7 +208,7 @@
         </div>
       </section>
 
-      <!-- 2. バイオリズム相関バロメーター（複合グラフ） -->
+      <!-- バイオリズム相関バロメーター（複合グラフ） -->
       <section class="rounded-3xl p-5 sm:p-6 bg-white/95 border border-purple-100 shadow-sm space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -262,12 +262,30 @@
         <div id="chart-container" class="w-full overflow-x-auto pb-2"></div>
       </section>
 
-      <!-- 3. 毎日の記録エリア（Morning ＆ 夜の振り返り 2段階構成） -->
+      <!-- これまでの記録一覧 -->
+      <section class="rounded-3xl p-5 sm:p-6 bg-white/95 border border-purple-100 shadow-sm space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base sm:text-lg font-extrabold text-[#4A3B69]">
+            これまでの記録（直近10件）
+          </h2>
+          <span id="records-total-count" class="text-xs text-slate-400">全 0 件</span>
+        </div>
+
+        <div id="history-list" class="space-y-2.5">
+          <!-- JSで描画 -->
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================================================================
+         2. 記録タブ（Morning ＆ Night の入力だけに特化）
+         ================================================================== -->
+    <div id="view-record" class="hidden space-y-6">
       <section id="form-section" class="rounded-3xl p-5 sm:p-7 bg-gradient-to-b from-[#F5EFFF] to-[#FDF7FA] border-2 border-[#C5B3E6] shadow-md space-y-5">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-purple-200/70">
           <div>
             <span class="inline-block px-2.5 py-0.5 rounded-full bg-[#7E57C2] text-white text-[11px] font-bold mb-1">
-              INPUT AREA
+              DAILY RECORD
             </span>
             <h2 class="text-lg sm:text-xl font-extrabold text-[#4A3B69]">
               毎日の記録ノート
@@ -397,7 +415,7 @@
             </div>
           </div>
 
-          <!-- STEP 3：昨夜の睡眠時間 -->
+          <!-- STEP 3：睡眠時間（就寝時間・起床時間） -->
           <div class="space-y-2.5 pt-2 border-t border-purple-50">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex items-center gap-2">
@@ -514,12 +532,12 @@
             </button>
           </div>
 
-          <!-- Morning 保存後＆夜の振り返り未完了時の案内カード -->
+          <!-- Morning 保存後＆Night未完了時の案内カード -->
           <div id="morning-done-prompt" class="hidden rounded-2xl p-4 bg-gradient-to-r from-[#F3E8FF] to-[#FCE4EC]/70 border border-[#D8B4FE] text-xs sm:text-sm text-[#4A3B69] leading-relaxed flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="flex items-start gap-2.5">
               <span class="text-[#7E57C2] shrink-0 mt-0.5">✦</span>
               <span>
-                ✨ 記録が完了しました！1日を通した気分や体調の振り返りは、夜にゆっくり入力しましょう 🌙
+                ✨ Morningの記録が完了しました！1日を通した気分や体調の振り返りは、夜に「Night」から入力しましょう 🌙
               </span>
             </div>
             <button
@@ -533,7 +551,7 @@
           </div>
         </div>
 
-        <!-- STAGE 2：🌙 夜の振り返り（1日の終わりに） -->
+        <!-- STAGE 2：Night -->
         <form onsubmit="saveEvening(event)" class="rounded-3xl p-4 sm:p-6 bg-white border-2 border-[#C5B3E6] shadow-xs space-y-5">
           <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-purple-100">
             <div class="flex items-center gap-2.5">
@@ -541,18 +559,18 @@
                 🌙
               </span>
               <div>
-                <h3 class="text-base font-extrabold text-[#4A3B69]">
-                  🌙 今日はどんな一日でしたか？（夜の振り返り）
+                <h3 class="text-base font-extrabold tracking-wide text-[#4A3B69]">
+                  Night
                 </h3>
                 <p class="text-[11px] text-slate-500">
-                  1日を通した気分やイライラ、体調のサインをゆっくり記録しましょう
+                  今日はどんな一日でしたか？気分や体調を記録しましょう
                 </p>
               </div>
             </div>
 
             <div class="flex items-center gap-2">
               <span id="evening-saved-badge" class="hidden px-2.5 py-1 rounded-full bg-[#F3E8FF] text-[#5E35B1] text-[11px] font-bold">
-                🌙 振り返り済み
+                🌙 記録済み
               </span>
               <button
                 type="button"
@@ -630,36 +648,22 @@
               ></textarea>
             </div>
 
-            <!-- 夜の振り返り保存ボタン -->
+            <!-- Night 保存ボタン -->
             <button
               type="submit"
               id="form-submit-evening"
               class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#7E57C2] to-[#5E35B1] text-white font-extrabold text-sm shadow-sm hover:opacity-95 transition flex items-center justify-center gap-2"
             >
               <span>🌙</span>
-              <span>夜の振り返りを保存して1日の記録を完了する</span>
+              <span>Night の記録を保存して1日を完了する</span>
             </button>
           </div>
         </form>
       </section>
-
-      <!-- 4. これまでの記録一覧 -->
-      <section class="rounded-3xl p-5 sm:p-6 bg-white/95 border border-purple-100 shadow-sm space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-base sm:text-lg font-extrabold text-[#4A3B69]">
-            これまでの記録（直近10件）
-          </h2>
-          <span id="records-total-count" class="text-xs text-slate-400">全 0 件</span>
-        </div>
-
-        <div id="history-list" class="space-y-2.5">
-          <!-- JSで描画 -->
-        </div>
-      </section>
     </div>
 
     <!-- ==================================================================
-         傾向分析（マイパターン）タブ
+         3. 傾向分析（マイパターン）タブ
          ================================================================== -->
     <div id="view-insights" class="hidden space-y-6">
       <!-- ヘッダーサマリー -->
@@ -881,13 +885,6 @@
     // ========================================================================
     // ユーティリティ
     // ========================================================================
-    function formatHourFloat(hourFloat) {
-      const normalized = ((hourFloat % 24) + 24) % 24;
-      const h = Math.floor(normalized);
-      const m = Math.round((normalized - h) * 60);
-      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-    }
-
     function formatDateStr(dateObj) {
       const y = dateObj.getFullYear();
       const m = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -1120,7 +1117,7 @@
     function renderGreetingBanner() {
       const banner = document.getElementById('greeting-banner');
       if (isEveningTime) {
-        banner.innerHTML = `<span class="text-[#7E57C2] shrink-0">🌙</span><span>こんばんは🌙 1日おつかれさまでした。下の<strong>「🌙 夜の振り返り」</strong>で今日の気分や体調をゆっくり記録しましょう。</span>`;
+        banner.innerHTML = `<span class="text-[#7E57C2] shrink-0">🌙</span><span>こんばんは🌙 1日おつかれさまでした。下の<strong>「Night」</strong>で今日の気分や体調をゆっくり記録しましょう。</span>`;
       } else {
         banner.innerHTML = `<span class="text-[#F59E0B] shrink-0">☀️</span><span>おはようございます。朝の記録をつけましょう。</span>`;
       }
@@ -1140,7 +1137,6 @@
       document.getElementById('nav-date-badge').textContent = `📅 ${activeRec?.date || getTodayStr()}${activeRec?.cycleDay ? `（周期 ${activeRec.cycleDay}日目）` : ''}`;
       document.getElementById('nav-avg-cycle').textContent = `※平均周期 ${analysis.avgCycleLength}日基準`;
 
-      // 記録が1件もない場合は「まだ記録がありません」のみを表示
       if (!activeRec) {
         card.style.borderColor = '#E9D5FF';
         stageBadge.textContent = '未記録';
@@ -1203,7 +1199,7 @@
 
       document.getElementById('nav-stat-temp').textContent = typeof activeRec.temperature === 'number' ? `${activeRec.temperature.toFixed(2)}℃` : '--';
       document.getElementById('nav-stat-sleep').textContent = typeof activeRec.sleep === 'number' ? `${activeRec.sleep.toFixed(1)}h` : '--';
-      document.getElementById('nav-stat-mood').textContent = typeof activeRec.mood === 'number' ? `${activeRec.mood} / 5` : '夜に入力';
+      document.getElementById('nav-stat-mood').textContent = typeof activeRec.mood === 'number' ? `${activeRec.mood} / 5` : 'Nightで入力';
     }
 
     function renderChart(analysis) {
@@ -1254,7 +1250,6 @@
 
       let svg = `<div style="min-width: ${Math.min(width, 960)}px"><svg viewBox="0 0 ${width} ${height}" class="w-full h-auto select-none overflow-visible">`;
 
-      // 背景帯
       data.forEach((d, i) => {
         const stageObj = STAGES[d.effectiveStage] || STAGES.follicular;
         const cx = getX(i);
@@ -1267,7 +1262,6 @@
         }
       });
 
-      // 横グリッド
       [0, 0.25, 0.5, 0.75, 1].forEach((ratio, idx) => {
         const y = padTop + plotH - ratio * plotH;
         const tempLabel = (minTemp + ratio * (maxTemp - minTemp)).toFixed(2);
@@ -1282,7 +1276,6 @@
       if (state.showMood && moodPoints) svg += `<polyline fill="none" stroke="#7E57C2" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" points="${moodPoints}" />`;
       if (state.showTemp && tempPoints) svg += `<polyline fill="none" stroke="#EC407A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${tempPoints}" />`;
 
-      // ポイント＆クリック領域
       data.forEach((d, i) => {
         const cx = getX(i);
         const isSelected = d.date === activeDate;
@@ -1345,7 +1338,7 @@
               <div class="flex flex-wrap items-center gap-3 text-xs text-slate-600">
                 <span>体温：<strong class="text-[#C2185B]">${typeof r.temperature === 'number' ? `${r.temperature.toFixed(2)}℃` : '--'}</strong></span>
                 <span>睡眠：<strong class="text-[#0284C7]">${typeof r.sleep === 'number' ? `${r.sleep.toFixed(1)}h` : '--'}</strong></span>
-                <span>気分：<strong class="text-[#5E35B1]">${moodObj ? `${moodObj.emoji} ${r.mood}/5` : '夜に未入力'}</strong></span>
+                <span>気分：<strong class="text-[#5E35B1]">${moodObj ? `${moodObj.emoji} ${r.mood}/5` : 'Night未入力'}</strong></span>
               </div>
               ${(r.conditionTags?.length > 0 || r.memo) ? `
                 <div class="text-[11px] text-slate-500">
@@ -1448,7 +1441,7 @@
           </div>
         `).join('');
       } else {
-        careEl.innerHTML = `<div class="p-4 rounded-2xl bg-[#FAF7FF] text-xs text-slate-500">夜の振り返りでセルフケアタグを記録していくと、あなたに効果が出やすい習慣が表示されます。</div>`;
+        careEl.innerHTML = `<div class="p-4 rounded-2xl bg-[#FAF7FF] text-xs text-slate-500">Nightでセルフケアタグを記録していくと、あなたに効果が出やすい習慣が表示されます。</div>`;
       }
     }
 
@@ -1456,13 +1449,11 @@
     // フォームUI操作・イベントハンドラ
     // ========================================================================
     function renderFormControls() {
-      // 手動時期選択
       document.getElementById('stage-manual-grid').innerHTML = Object.values(STAGES).map((st) => {
         const active = state.manualStageValue === st.id;
         return `<button type="button" onclick="selectManualStage('${st.id}')" class="p-2.5 rounded-xl border-2 text-xs font-bold transition ${active ? 'border-[#7E57C2] bg-[#F3E8FF] text-[#4A3B69]' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}">${st.name}</button>`;
       }).join('');
 
-      // 気分ボタン
       document.getElementById('mood-grid').innerHTML = MOOD_OPTIONS.map((opt) => {
         const active = state.mood === opt.value;
         return `
@@ -1474,20 +1465,17 @@
       }).join('');
       document.getElementById('mood-label').textContent = MOOD_OPTIONS.find((m) => m.value === state.mood)?.label || '';
 
-      // 元気度ボタン
       document.getElementById('energy-grid').innerHTML = ENERGY_OPTIONS.map((opt) => {
         const active = state.energy === opt.value;
         return `<button type="button" onclick="selectEnergy(${opt.value})" class="py-2 rounded-xl text-xs font-bold border transition ${active ? 'bg-[#26A69A] border-[#00897B] text-white shadow-xs' : 'bg-white border-[#B2DFDB] text-[#00695C] hover:bg-teal-50'}">${opt.value}</button>`;
       }).join('');
       document.getElementById('energy-label').textContent = ENERGY_OPTIONS.find((e) => e.value === state.energy)?.label || '';
 
-      // 体調タグ
       document.getElementById('condition-tags-grid').innerHTML = CONDITION_TAGS.map((tag) => {
         const active = state.conditionTags.includes(tag);
         return `<button type="button" onclick="toggleConditionTag('${tag}')" class="px-3 py-1.5 rounded-full text-xs font-bold border transition ${active ? 'bg-[#FCE4EC] border-[#EC407A] text-[#AD1457] shadow-xs' : 'bg-white border-purple-100 text-slate-600 hover:bg-purple-50/60'}">${active ? `✓ ${tag}` : tag}</button>`;
       }).join('');
 
-      // セルフケアタグ
       document.getElementById('selfcare-tags-grid').innerHTML = SELF_CARE_TAGS.map((tag) => {
         const active = state.selfCareTags.includes(tag);
         return `<button type="button" onclick="toggleSelfCareTag('${tag}')" class="px-3 py-1.5 rounded-full text-xs font-bold border transition ${active ? 'bg-[#E0F2F1] border-[#26A69A] text-[#00695C] shadow-xs' : 'bg-white border-purple-100 text-slate-600 hover:bg-teal-50/40'}">${active ? `✓ ${tag}` : tag}</button>`;
@@ -1549,7 +1537,7 @@
       const mBadge = document.getElementById('morning-saved-badge');
       const tempVal = document.getElementById('input-temp').value;
       if (state.morningSavedFlag) {
-        mBadge.textContent = `☀️ 記録済み（${tempVal}℃ / ${formatHourFloat(state.bedtime)}〜${formatHourFloat(state.waketime)}・${Number(state.sleep).toFixed(1)}h）`;
+        mBadge.textContent = `☀️ 記録済み（${tempVal}℃ / ${state.bedTime}〜${state.wakeTime}・${Number(state.sleep).toFixed(1)}h）`;
         mBadge.classList.remove('hidden');
       } else {
         mBadge.classList.add('hidden');
@@ -1581,11 +1569,11 @@
       if (state.eveningSectionOpen) {
         eBody.classList.remove('hidden');
         eToggleBtn.textContent = '閉じる ▲';
-        if (stickyEveningLabel) stickyEveningLabel.textContent = '夜の振り返りを保存';
+        if (stickyEveningLabel) stickyEveningLabel.textContent = 'Nightを保存';
       } else {
         eBody.classList.add('hidden');
         eToggleBtn.textContent = '開いて入力する ▼';
-        if (stickyEveningLabel) stickyEveningLabel.textContent = '夜の振り返り入力';
+        if (stickyEveningLabel) stickyEveningLabel.textContent = 'Nightを入力';
       }
     }
 
@@ -1605,32 +1593,40 @@
     function switchTab(tab) {
       state.activeTab = tab;
       const homeView = document.getElementById('view-home');
+      const recordView = document.getElementById('view-record');
       const insView = document.getElementById('view-insights');
       const btnHome = document.getElementById('tab-btn-home');
+      const btnRecord = document.getElementById('tab-btn-record');
       const btnIns = document.getElementById('tab-btn-insights');
       const stickyBar = document.getElementById('sticky-save-bar');
 
+      const activeClass = 'px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1 bg-white text-[#5E35B1] shadow-xs';
+      const inactiveClass = 'px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1 text-[#7E57C2] hover:text-[#4A3B69]';
+
+      homeView.classList.add('hidden');
+      recordView.classList.add('hidden');
+      insView.classList.add('hidden');
+      btnHome.className = inactiveClass;
+      btnRecord.className = inactiveClass;
+      btnIns.className = inactiveClass;
+
       if (tab === 'home') {
         homeView.classList.remove('hidden');
-        insView.classList.add('hidden');
-        if (stickyBar) stickyBar.classList.remove('hidden');
-        btnHome.className = 'px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 bg-white text-[#5E35B1] shadow-xs';
-        btnIns.className = 'px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 text-[#7E57C2] hover:text-[#4A3B69]';
-      } else {
-        homeView.classList.add('hidden');
-        insView.classList.remove('hidden');
+        btnHome.className = activeClass;
         if (stickyBar) stickyBar.classList.add('hidden');
-        btnIns.className = 'px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 bg-white text-[#5E35B1] shadow-xs';
-        btnHome.className = 'px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 text-[#7E57C2] hover:text-[#4A3B69]';
+      } else if (tab === 'record') {
+        recordView.classList.remove('hidden');
+        btnRecord.className = activeClass;
+        if (stickyBar) stickyBar.classList.remove('hidden');
+      } else {
+        insView.classList.remove('hidden');
+        btnIns.className = activeClass;
+        if (stickyBar) stickyBar.classList.add('hidden');
       }
     }
 
     function toggleDataMenu() {
       document.getElementById('data-menu').classList.toggle('hidden');
-    }
-
-    function scrollToForm() {
-      document.getElementById('form-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function selectNavDate(dateStr) {
@@ -1895,7 +1891,7 @@
       state.eveningSectionOpen = true;
       persistRecords(next);
       updateSavedBadgesAndVisibility();
-      showToast(`${state.formDate} の「夜の振り返り」を保存しました 🌙`);
+      showToast(`${state.formDate} の Night 記録を保存しました 🌙`);
     }
 
     function editRecord(dateStr) {
@@ -1904,7 +1900,8 @@
       state.eveningSectionOpen = true;
       updateSavedBadgesAndVisibility();
       renderAll();
-      scrollToForm();
+      switchTab('record');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function deleteRecord(dateStr) {
