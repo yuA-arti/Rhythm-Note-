@@ -22,26 +22,24 @@
     <span id="toast-text">保存しました</span>
   </div>
 
-  <!-- スマホ操作用：画面下部の固定保存バー（「記録」タブ表示時のみ表示） -->
+  <!-- スマホ操作用：画面下部のクイック移動バー（「記録」タブ表示時のみ表示） -->
   <div id="sticky-save-bar" class="hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-purple-200 px-4 py-3 shadow-[0_-4px_16px_rgba(74,59,105,0.08)]">
     <div class="max-w-5xl mx-auto flex items-center gap-2.5">
       <button
         type="button"
-        id="sticky-btn-morning"
-        onclick="saveMorning()"
+        onclick="jumpToMorning()"
         class="flex-1 py-3 px-3 rounded-2xl bg-gradient-to-r from-[#F48FB1] to-[#9575CD] text-white font-extrabold text-xs sm:text-sm shadow-xs active:scale-[0.98] transition flex items-center justify-center gap-1.5"
       >
         <span>☀️</span>
-        <span>Morningを保存</span>
+        <span>Morningを入力</span>
       </button>
       <button
         type="button"
-        id="sticky-btn-evening"
-        onclick="handleStickyEveningClick()"
+        onclick="jumpToNight()"
         class="flex-1 py-3 px-3 rounded-2xl bg-gradient-to-r from-[#7E57C2] to-[#5E35B1] text-white font-extrabold text-xs sm:text-sm shadow-xs active:scale-[0.98] transition flex items-center justify-center gap-1.5"
       >
         <span>🌙</span>
-        <span id="sticky-evening-label">Nightを入力</span>
+        <span>Nightを入力</span>
       </button>
     </div>
   </div>
@@ -262,13 +260,36 @@
         <div id="chart-container" class="w-full overflow-x-auto pb-2"></div>
       </section>
 
-      <!-- これまでの記録一覧 -->
+      <!-- これまでの記録一覧（タグ別日付抽出フィルター付き） -->
       <section class="rounded-3xl p-5 sm:p-6 bg-white/95 border border-purple-100 shadow-sm space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-base sm:text-lg font-extrabold text-[#4A3B69]">
-            これまでの記録（直近10件）
-          </h2>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 id="history-heading" class="text-base sm:text-lg font-extrabold text-[#4A3B69]">
+              これまでの記録（直近10件）
+            </h2>
+            <p class="text-[11px] text-slate-500">
+              下のタグを押すと「その症状・習慣があった日」だけを全期間から抽出できます
+            </p>
+          </div>
           <span id="records-total-count" class="text-xs text-slate-400">全 0 件</span>
+        </div>
+
+        <!-- タグ別日付抽出フィルターバー -->
+        <div id="history-filter-bar" class="p-3 rounded-2xl bg-[#FAF7FF] border border-purple-100 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold text-[#5E35B1]">🔍 タグで日付を追跡・抽出：</span>
+            <button
+              type="button"
+              id="btn-clear-history-filter"
+              onclick="setHistoryFilter(null)"
+              class="hidden text-[11px] font-bold text-[#EC407A] hover:underline"
+            >
+              ✕ 絞り込みを解除
+            </button>
+          </div>
+          <div id="history-filter-chips" class="flex flex-wrap gap-1.5">
+            <!-- JSで描画 -->
+          </div>
         </div>
 
         <div id="history-list" class="space-y-2.5">
@@ -311,7 +332,7 @@
         </div>
 
         <!-- STAGE 1：Morning -->
-        <div class="rounded-3xl p-4 sm:p-6 bg-white border-2 border-[#F8BBD0] shadow-xs space-y-5">
+        <div id="morning-card" class="scroll-mt-20 rounded-3xl p-4 sm:p-6 bg-white border-2 border-[#F8BBD0] shadow-xs space-y-5">
           <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-pink-100">
             <div class="flex items-center gap-2">
               <span class="w-8 h-8 rounded-2xl bg-[#FFF8E1] border border-[#FDE68A] flex items-center justify-center">
@@ -327,58 +348,43 @@
               </div>
             </div>
             <span id="morning-saved-badge" class="hidden px-2.5 py-1 rounded-full bg-[#FCE4EC] text-[#AD1457] text-[11px] font-bold">
+              ☀️ 記録済み
             </span>
           </div>
 
-          <!-- STEP 1：生理が始まりましたか？ -->
+          <!-- STEP 1：生理開始（1ボタントグル） -->
           <div class="space-y-2.5">
             <div class="flex items-center gap-2">
               <span class="px-2.5 py-0.5 rounded-lg bg-[#EC407A] text-white text-xs font-bold">
-                STEP 1（必須確認）
+                STEP 1
               </span>
               <h4 class="text-sm font-bold text-slate-800">
-                生理が始まりましたか？（生理開始日の記録）
+                生理開始日の記録
               </h4>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                type="button"
-                id="btn-period-no"
-                onclick="setPeriodStart(false)"
-                class="p-3.5 rounded-2xl border-2 text-left transition flex items-center gap-3 bg-[#FAF7FF] border-[#7E57C2] shadow-xs"
-              >
-                <div id="radio-period-no" class="w-5 h-5 rounded-full border-2 border-[#7E57C2] flex items-center justify-center shrink-0">
-                  <div class="w-2.5 h-2.5 rounded-full bg-[#7E57C2]"></div>
+            <button
+              type="button"
+              id="btn-period-toggle"
+              onclick="togglePeriodStart()"
+              class="w-full p-4 rounded-2xl border-2 text-left transition flex items-center justify-between gap-3 bg-white border-pink-200/80 text-slate-700 hover:bg-pink-50/40"
+            >
+              <div class="flex items-center gap-3">
+                <div id="check-period-box" class="w-6 h-6 rounded-xl border-2 border-pink-300 flex items-center justify-center shrink-0 text-white text-xs font-bold">
                 </div>
                 <div>
-                  <div class="text-xs sm:text-sm font-bold text-slate-800">
-                    まだ・生理開始日ではない
+                  <div id="period-toggle-title" class="text-sm font-extrabold text-slate-800">
+                    🩸 生理開始
                   </div>
-                  <div class="text-[11px] text-slate-500">
-                    通常の日や、すでに生理中（2日目以降）はこちら
-                  </div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                id="btn-period-yes"
-                onclick="setPeriodStart(true)"
-                class="p-3.5 rounded-2xl border-2 text-left transition flex items-center gap-3 bg-white border-pink-200/80 text-slate-600 hover:bg-pink-50/40"
-              >
-                <div id="radio-period-yes" class="w-5 h-5 rounded-full border-2 border-pink-300 flex items-center justify-center shrink-0">
-                </div>
-                <div>
-                  <div class="text-xs sm:text-sm font-bold text-[#AD1457]">
-                    🩸 今日から生理が始まった！（開始日）
-                  </div>
-                  <div class="text-[11px] text-[#C2185B]">
-                    ここを選ぶと新しい周期1日目として自動計算されます
+                  <div class="text-[11px] text-slate-500 mt-0.5">
+                    ここを押すと新しい周期1日目として自動計算されます（もう一度押すと解除）
                   </div>
                 </div>
-              </button>
-            </div>
+              </div>
+              <span id="period-toggle-status" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-500 shrink-0">
+                未選択
+              </span>
+            </button>
           </div>
 
           <!-- STEP 2：今朝の基礎体温 -->
@@ -432,7 +438,6 @@
             </div>
 
             <div class="bg-[#FAF7FF] rounded-2xl p-3.5 border border-purple-100 space-y-3.5">
-              <!-- 就寝時間・起床時間の直接入力 -->
               <div class="grid grid-cols-2 gap-3">
                 <div class="bg-white rounded-xl p-2.5 border border-purple-200 flex flex-col items-center">
                   <label for="input-bedtime" class="text-[11px] font-bold text-slate-500 mb-1">
@@ -543,7 +548,7 @@
             <button
               type="button"
               id="btn-open-evening-now"
-              onclick="openEveningSection()"
+              onclick="jumpToNight()"
               class="shrink-0 px-3 py-1.5 rounded-xl bg-white border border-purple-300 text-[#5E35B1] text-xs font-bold hover:bg-purple-50 transition"
             >
               今入力する
@@ -552,7 +557,7 @@
         </div>
 
         <!-- STAGE 2：Night -->
-        <form onsubmit="saveEvening(event)" class="rounded-3xl p-4 sm:p-6 bg-white border-2 border-[#C5B3E6] shadow-xs space-y-5">
+        <form id="night-card" onsubmit="saveEvening(event)" class="scroll-mt-20 rounded-3xl p-4 sm:p-6 bg-white border-2 border-[#C5B3E6] shadow-xs space-y-5">
           <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-purple-100">
             <div class="flex items-center gap-2.5">
               <span class="w-8 h-8 rounded-2xl bg-[#F3E8FF] border border-purple-200 flex items-center justify-center">
@@ -615,23 +620,77 @@
               </div>
             </div>
 
-            <!-- 今日の体調・気分のサイン -->
-            <div class="space-y-2">
-              <label class="text-xs sm:text-sm font-bold text-slate-800 block">
-                今日の体調・気分のサイン（複数選択OK）
-              </label>
+            <!-- 今日の体調・気分のサイン（カスタム追加・削除対応） -->
+            <div class="space-y-2.5">
+              <div class="flex items-center justify-between">
+                <label class="text-xs sm:text-sm font-bold text-slate-800">
+                  今日の体調・気分のサイン（複数選択OK）
+                </label>
+                <button
+                  type="button"
+                  id="btn-manage-cond-tags"
+                  onclick="toggleManageMode('cond')"
+                  class="text-[11px] font-bold text-[#AD1457] hover:underline"
+                >
+                  ⚙️ 項目を編集
+                </button>
+              </div>
               <div id="condition-tags-grid" class="flex flex-wrap gap-2">
                 <!-- JSで描画 -->
               </div>
+              <div class="flex items-center gap-2 pt-1">
+                <input
+                  id="new-cond-tag-input"
+                  type="text"
+                  maxlength="20"
+                  placeholder="例：湿疹、腰痛、肩こり など"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomTag('cond');}"
+                  class="flex-1 rounded-xl border border-pink-200 bg-[#FFF5F8] px-3 py-2 text-xs text-slate-700 focus:outline-none focus:border-[#EC407A]"
+                />
+                <button
+                  type="button"
+                  onclick="addCustomTag('cond')"
+                  class="px-3.5 py-2 rounded-xl bg-[#EC407A] text-white text-xs font-bold hover:opacity-90 transition shrink-0"
+                >
+                  ＋ 追加
+                </button>
+              </div>
             </div>
 
-            <!-- 今日できたセルフケア -->
-            <div class="space-y-2">
-              <label class="text-xs sm:text-sm font-bold text-slate-800 block">
-                今日できたセルフケア・習慣（好調の秘訣を分析します）
-              </label>
+            <!-- 今日できたセルフケア（カスタム追加・削除対応） -->
+            <div class="space-y-2.5">
+              <div class="flex items-center justify-between">
+                <label class="text-xs sm:text-sm font-bold text-slate-800">
+                  今日できたセルフケア・習慣（好調の秘訣を分析します）
+                </label>
+                <button
+                  type="button"
+                  id="btn-manage-care-tags"
+                  onclick="toggleManageMode('care')"
+                  class="text-[11px] font-bold text-[#00695C] hover:underline"
+                >
+                  ⚙️ 項目を編集
+                </button>
+              </div>
               <div id="selfcare-tags-grid" class="flex flex-wrap gap-2">
                 <!-- JSで描画 -->
+              </div>
+              <div class="flex items-center gap-2 pt-1">
+                <input
+                  id="new-care-tag-input"
+                  type="text"
+                  maxlength="20"
+                  placeholder="例：保湿ケア、白湯を飲んだ、昼寝 など"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomTag('care');}"
+                  class="flex-1 rounded-xl border border-teal-200 bg-[#F2FBF9] px-3 py-2 text-xs text-slate-700 focus:outline-none focus:border-[#26A69A]"
+                />
+                <button
+                  type="button"
+                  onclick="addCustomTag('care')"
+                  class="px-3.5 py-2 rounded-xl bg-[#26A69A] text-white text-xs font-bold hover:opacity-90 transition shrink-0"
+                >
+                  ＋ 追加
+                </button>
               </div>
             </div>
 
@@ -769,6 +828,7 @@
     // 定数・マスターデータ定義
     // ========================================================================
     const STORAGE_KEY = 'rhythm_note_records_v3';
+    const CUSTOM_TAGS_KEY = 'rhythm_note_custom_tags_v1';
 
     const STAGES = {
       menstrual: {
@@ -841,13 +901,13 @@
       { value: 5, label: '5：エネルギー満タン' },
     ];
 
-    const CONDITION_TAGS = [
+    const DEFAULT_CONDITION_TAGS = [
       'イライラ気味', '気分の落ち込み', '強い眠気', '腹痛・下腹部痛',
       '頭痛・重だるさ', 'むくみ', '食欲増加・甘いもの欲', '肌荒れ',
       '仕事・家事疲れ', '睡眠不足感', '快調・スッキリ',
     ];
 
-    const SELF_CARE_TAGS = [
+    const DEFAULT_SELF_CARE_TAGS = [
       '湯船に浸かった', '早めに就寝した', 'ストレッチ・ヨガ', 'ウォーキング・運動',
       'カフェイン控えめ', '温かい飲み物', '好きな音楽・趣味', '鉄分・栄養意識',
     ];
@@ -859,6 +919,11 @@
 
     let state = {
       records: [],
+      conditionOptions: [...DEFAULT_CONDITION_TAGS],
+      selfCareOptions: [...DEFAULT_SELF_CARE_TAGS],
+      manageCondMode: false,
+      manageCareMode: false,
+      historyFilterTag: null,
       activeTab: 'home',
       chartRange: '30',
       showTemp: true,
@@ -907,6 +972,15 @@
       return `${Number(m)}/${Number(d)}`;
     }
 
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     function showToast(msg) {
       const toast = document.getElementById('toast');
       document.getElementById('toast-text').textContent = msg;
@@ -914,6 +988,20 @@
       setTimeout(() => {
         toast.classList.add('hidden');
       }, 3500);
+    }
+
+    function persistCustomTagLists() {
+      try {
+        localStorage.setItem(
+          CUSTOM_TAGS_KEY,
+          JSON.stringify({
+            conditionOptions: state.conditionOptions,
+            selfCareOptions: state.selfCareOptions,
+          })
+        );
+      } catch (e) {
+        console.error('Failed to save custom tags', e);
+      }
     }
 
     // ========================================================================
@@ -1312,17 +1400,97 @@
       container.innerHTML = svg;
     }
 
+    function setHistoryFilter(tag) {
+      state.historyFilterTag = state.historyFilterTag === tag ? null : tag;
+      renderAll();
+    }
+
     function renderHistoryList(analysis) {
       document.getElementById('records-total-count').textContent = `全 ${state.records.length} 件`;
-      const listEl = document.getElementById('history-list');
-      const items = [...analysis.enriched].reverse().slice(0, 10);
 
-      if (items.length === 0) {
-        listEl.innerHTML = `<div class="py-6 text-center text-xs sm:text-sm text-slate-400">まだ記録がありません。</div>`;
+      // タグ別の使用回数を集計（履歴から追いかけられるチップ一覧を生成）
+      const condCountMap = {};
+      const careCountMap = {};
+      state.records.forEach((r) => {
+        (r.conditionTags || []).forEach((t) => {
+          condCountMap[t] = (condCountMap[t] || 0) + 1;
+        });
+        (r.selfCareTags || []).forEach((t) => {
+          careCountMap[t] = (careCountMap[t] || 0) + 1;
+        });
+      });
+
+      const allFilterTags = [
+        ...Object.entries(condCountMap).map(([tag, count]) => ({ tag, count, type: 'cond' })),
+        ...Object.entries(careCountMap).map(([tag, count]) => ({ tag, count, type: 'care' })),
+      ];
+
+      const filterBar = document.getElementById('history-filter-bar');
+      const chipsEl = document.getElementById('history-filter-chips');
+      const clearBtn = document.getElementById('btn-clear-history-filter');
+
+      if (allFilterTags.length === 0) {
+        filterBar.classList.add('hidden');
+      } else {
+        filterBar.classList.remove('hidden');
+        if (state.historyFilterTag) {
+          clearBtn.classList.remove('hidden');
+        } else {
+          clearBtn.classList.add('hidden');
+        }
+
+        chipsEl.innerHTML = allFilterTags
+          .map(({ tag, count, type }) => {
+            const isSelected = state.historyFilterTag === tag;
+            const activeStyle =
+              type === 'cond'
+                ? 'bg-[#EC407A] border-[#EC407A] text-white shadow-xs'
+                : 'bg-[#26A69A] border-[#26A69A] text-white shadow-xs';
+            const inactiveStyle =
+              type === 'cond'
+                ? 'bg-white border-pink-200 text-[#AD1457] hover:bg-pink-50'
+                : 'bg-white border-teal-200 text-[#00695C] hover:bg-teal-50';
+            return `
+              <button
+                type="button"
+                onclick='setHistoryFilter(${JSON.stringify(tag)})'
+                class="px-2.5 py-1 rounded-full text-[11px] font-bold border transition ${
+                  isSelected ? activeStyle : inactiveStyle
+                }"
+              >
+                ${escapeHtml(tag)} (${count})
+              </button>
+            `;
+          })
+          .join('');
+      }
+
+      const listEl = document.getElementById('history-list');
+      const headingEl = document.getElementById('history-heading');
+      let reversed = [...analysis.enriched].reverse();
+
+      if (state.historyFilterTag) {
+        reversed = reversed.filter(
+          (r) =>
+            (r.conditionTags || []).includes(state.historyFilterTag) ||
+            (r.selfCareTags || []).includes(state.historyFilterTag)
+        );
+        headingEl.textContent = `「${state.historyFilterTag}」の記録一覧（${reversed.length}件）`;
+      } else {
+        reversed = reversed.slice(0, 10);
+        headingEl.textContent = 'これまでの記録（直近10件）';
+      }
+
+      if (reversed.length === 0) {
+        listEl.innerHTML = `<div class="py-6 text-center text-xs sm:text-sm text-slate-400">${
+          state.historyFilterTag
+            ? `「${escapeHtml(state.historyFilterTag)}」が記録された日はまだありません。`
+            : 'まだ記録がありません。'
+        }</div>`;
         return;
       }
 
-      listEl.innerHTML = items.map((r) => {
+      listEl.innerHTML = reversed.map((r) => {
         const st = STAGES[r.effectiveStage] || STAGES.follicular;
         const moodObj = MOOD_OPTIONS.find((m) => m.value === r.mood);
         return `
@@ -1340,10 +1508,11 @@
                 <span>睡眠：<strong class="text-[#0284C7]">${typeof r.sleep === 'number' ? `${r.sleep.toFixed(1)}h` : '--'}</strong></span>
                 <span>気分：<strong class="text-[#5E35B1]">${moodObj ? `${moodObj.emoji} ${r.mood}/5` : 'Night未入力'}</strong></span>
               </div>
-              ${(r.conditionTags?.length > 0 || r.memo) ? `
-                <div class="text-[11px] text-slate-500">
-                  ${r.conditionTags?.length > 0 ? `<span class="mr-2 text-[#AD1457]">[${r.conditionTags.join('・')}]</span>` : ''}
-                  ${r.memo ? `<span>${r.memo}</span>` : ''}
+              ${(r.conditionTags?.length > 0 || r.selfCareTags?.length > 0 || r.memo) ? `
+                <div class="text-[11px] text-slate-500 flex flex-wrap items-center gap-1.5 pt-0.5">
+                  ${r.conditionTags?.length > 0 ? `<span class="text-[#AD1457] font-medium">[${escapeHtml(r.conditionTags.join('・'))}]</span>` : ''}
+                  ${r.selfCareTags?.length > 0 ? `<span class="text-[#00695C] font-medium">[${escapeHtml(r.selfCareTags.join('・'))}]</span>` : ''}
+                  ${r.memo ? `<span>${escapeHtml(r.memo)}</span>` : ''}
                 </div>
               ` : ''}
             </div>
@@ -1411,7 +1580,7 @@
       if (analysis.topGapFactors.length > 0) {
         gapEl.innerHTML = analysis.topGapFactors.map(([factor, count]) => `
           <div class="flex items-center justify-between p-3 rounded-2xl bg-[#FFFBEB] border border-amber-200 text-xs">
-            <span class="font-bold text-[#92400E]">${factor}</span>
+            <span class="font-bold text-[#92400E]">${escapeHtml(factor)}</span>
             <span class="px-2.5 py-0.5 rounded-full bg-white text-[#B45309] font-extrabold">${count}回 該当</span>
           </div>
         `).join('');
@@ -1435,7 +1604,7 @@
           <div class="flex items-center justify-between p-3 rounded-2xl bg-[#F2FBF9] border border-[#B2DFDB] text-xs">
             <div class="flex items-center gap-2.5">
               <span class="w-6 h-6 rounded-full bg-[#26A69A] text-white font-extrabold flex items-center justify-center">${idx + 1}</span>
-              <span class="font-bold text-[#00695C]">${care}</span>
+              <span class="font-bold text-[#00695C]">${escapeHtml(care)}</span>
             </div>
             <span class="text-[#00897B] font-extrabold">${count}日実践</span>
           </div>
@@ -1448,6 +1617,56 @@
     // ========================================================================
     // フォームUI操作・イベントハンドラ
     // ========================================================================
+    function toggleManageMode(type) {
+      if (type === 'cond') {
+        state.manageCondMode = !state.manageCondMode;
+      } else {
+        state.manageCareMode = !state.manageCareMode;
+      }
+      renderFormControls();
+    }
+
+    function addCustomTag(type) {
+      const inputId = type === 'cond' ? 'new-cond-tag-input' : 'new-care-tag-input';
+      const inputEl = document.getElementById(inputId);
+      const val = (inputEl.value || '').trim();
+      if (!val) return;
+
+      if (type === 'cond') {
+        if (!state.conditionOptions.includes(val)) {
+          state.conditionOptions.push(val);
+        }
+        if (!state.conditionTags.includes(val)) {
+          state.conditionTags.push(val);
+        }
+      } else {
+        if (!state.selfCareOptions.includes(val)) {
+          state.selfCareOptions.push(val);
+        }
+        if (!state.selfCareTags.includes(val)) {
+          state.selfCareTags.push(val);
+        }
+      }
+
+      inputEl.value = '';
+      persistCustomTagLists();
+      renderFormControls();
+      showToast(`「${val}」を追加して選択しました`);
+    }
+
+    function removeCustomTagOption(type, tag) {
+      if (type === 'cond') {
+        state.conditionOptions = state.conditionOptions.filter((t) => t !== tag);
+        state.conditionTags = state.conditionTags.filter((t) => t !== tag);
+      } else {
+        state.selfCareOptions = state.selfCareOptions.filter((t) => t !== tag);
+        state.selfCareTags = state.selfCareTags.filter((t) => t !== tag);
+      }
+      persistCustomTagLists();
+      renderFormControls();
+      showToast(`「${tag}」を項目から削除しました`);
+    }
+
     function renderFormControls() {
       document.getElementById('stage-manual-grid').innerHTML = Object.values(STAGES).map((st) => {
         const active = state.manualStageValue === st.id;
@@ -1471,14 +1690,42 @@
       }).join('');
       document.getElementById('energy-label').textContent = ENERGY_OPTIONS.find((e) => e.value === state.energy)?.label || '';
 
-      document.getElementById('condition-tags-grid').innerHTML = CONDITION_TAGS.map((tag) => {
+      // 体調サインタグ描画
+      const manageCondBtn = document.getElementById('btn-manage-cond-tags');
+      if (manageCondBtn) {
+        manageCondBtn.textContent = state.manageCondMode ? '✓ 編集を完了' : '⚙️ 項目を編集';
+      }
+      const allCondList = Array.from(new Set([...state.conditionOptions, ...state.conditionTags]));
+      document.getElementById('condition-tags-grid').innerHTML = allCondList.map((tag) => {
         const active = state.conditionTags.includes(tag);
-        return `<button type="button" onclick="toggleConditionTag('${tag}')" class="px-3 py-1.5 rounded-full text-xs font-bold border transition ${active ? 'bg-[#FCE4EC] border-[#EC407A] text-[#AD1457] shadow-xs' : 'bg-white border-purple-100 text-slate-600 hover:bg-purple-50/60'}">${active ? `✓ ${tag}` : tag}</button>`;
+        if (state.manageCondMode) {
+          return `
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border bg-rose-50 border-rose-200 text-[#AD1457]">
+              <span>${escapeHtml(tag)}</span>
+              <button type="button" onclick='removeCustomTagOption("cond", ${JSON.stringify(tag)})' class="w-4 h-4 rounded-full bg-rose-200 text-rose-800 flex items-center justify-center text-[10px] hover:bg-rose-300">✕</button>
+            </span>
+          `;
+        }
+        return `<button type="button" onclick='toggleConditionTag(${JSON.stringify(tag)})' class="px-3 py-1.5 rounded-full text-xs font-bold border transition ${active ? 'bg-[#FCE4EC] border-[#EC407A] text-[#AD1457] shadow-xs' : 'bg-white border-purple-100 text-slate-600 hover:bg-purple-50/60'}">${active ? `✓ ${escapeHtml(tag)}` : escapeHtml(tag)}</button>`;
       }).join('');
 
-      document.getElementById('selfcare-tags-grid').innerHTML = SELF_CARE_TAGS.map((tag) => {
+      // セルフケアタグ描画
+      const manageCareBtn = document.getElementById('btn-manage-care-tags');
+      if (manageCareBtn) {
+        manageCareBtn.textContent = state.manageCareMode ? '✓ 編集を完了' : '⚙️ 項目を編集';
+      }
+      const allCareList = Array.from(new Set([...state.selfCareOptions, ...state.selfCareTags]));
+      document.getElementById('selfcare-tags-grid').innerHTML = allCareList.map((tag) => {
         const active = state.selfCareTags.includes(tag);
-        return `<button type="button" onclick="toggleSelfCareTag('${tag}')" class="px-3 py-1.5 rounded-full text-xs font-bold border transition ${active ? 'bg-[#E0F2F1] border-[#26A69A] text-[#00695C] shadow-xs' : 'bg-white border-purple-100 text-slate-600 hover:bg-teal-50/40'}">${active ? `✓ ${tag}` : tag}</button>`;
+        if (state.manageCareMode) {
+          return `
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border bg-teal-50 border-teal-200 text-[#00695C]">
+              <span>${escapeHtml(tag)}</span>
+              <button type="button" onclick='removeCustomTagOption("care", ${JSON.stringify(tag)})' class="w-4 h-4 rounded-full bg-teal-200 text-teal-800 flex items-center justify-center text-[10px] hover:bg-teal-300">✕</button>
+            </span>
+          `;
+        }
+        return `<button type="button" onclick='toggleSelfCareTag(${JSON.stringify(tag)})' class="px-3 py-1.5 rounded-full text-xs font-bold border transition ${active ? 'bg-[#E0F2F1] border-[#26A69A] text-[#00695C] shadow-xs' : 'bg-white border-purple-100 text-slate-600 hover:bg-teal-50/40'}">${active ? `✓ ${escapeHtml(tag)}` : escapeHtml(tag)}</button>`;
       }).join('');
     }
 
@@ -1535,9 +1782,8 @@
 
     function updateSavedBadgesAndVisibility() {
       const mBadge = document.getElementById('morning-saved-badge');
-      const tempVal = document.getElementById('input-temp').value;
       if (state.morningSavedFlag) {
-        mBadge.textContent = `☀️ 記録済み（${tempVal}℃ / ${state.bedTime}〜${state.wakeTime}・${Number(state.sleep).toFixed(1)}h）`;
+        mBadge.textContent = '☀️ 記録済み';
         mBadge.classList.remove('hidden');
       } else {
         mBadge.classList.add('hidden');
@@ -1565,29 +1811,31 @@
 
       const eBody = document.getElementById('evening-body');
       const eToggleBtn = document.getElementById('btn-toggle-evening');
-      const stickyEveningLabel = document.getElementById('sticky-evening-label');
       if (state.eveningSectionOpen) {
         eBody.classList.remove('hidden');
         eToggleBtn.textContent = '閉じる ▲';
-        if (stickyEveningLabel) stickyEveningLabel.textContent = 'Nightを保存';
       } else {
         eBody.classList.add('hidden');
         eToggleBtn.textContent = '開いて入力する ▼';
-        if (stickyEveningLabel) stickyEveningLabel.textContent = 'Nightを入力';
       }
     }
 
-    function handleStickyEveningClick() {
+    function jumpToMorning() {
+      const mCard = document.getElementById('morning-card');
+      if (mCard) {
+        mCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    function jumpToNight() {
       if (!state.eveningSectionOpen) {
         state.eveningSectionOpen = true;
         updateSavedBadgesAndVisibility();
-        const eBody = document.getElementById('evening-body');
-        if (eBody) {
-          eBody.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        return;
       }
-      saveEvening();
+      const nCard = document.getElementById('night-card');
+      if (nCard) {
+        nCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
 
     function switchTab(tab) {
@@ -1663,29 +1911,32 @@
       if (val) syncFormFromDate(val);
     }
 
+    function togglePeriodStart() {
+      setPeriodStart(!state.isPeriodStart);
+    }
+
     function setPeriodStart(val) {
-      state.isPeriodStart = val;
-      const btnNo = document.getElementById('btn-period-no');
-      const btnYes = document.getElementById('btn-period-yes');
-      const radioNo = document.getElementById('radio-period-no');
-      const radioYes = document.getElementById('radio-period-yes');
+      state.isPeriodStart = Boolean(val);
+      const btn = document.getElementById('btn-period-toggle');
+      const box = document.getElementById('check-period-box');
+      const title = document.getElementById('period-toggle-title');
+      const status = document.getElementById('period-toggle-status');
+      if (!btn || !box || !title || !status) return;
 
-      if (!val) {
-        btnNo.className = 'p-3.5 rounded-2xl border-2 text-left transition flex items-center gap-3 bg-[#FAF7FF] border-[#7E57C2] shadow-xs';
-        radioNo.className = 'w-5 h-5 rounded-full border-2 border-[#7E57C2] flex items-center justify-center shrink-0';
-        radioNo.innerHTML = '<div class="w-2.5 h-2.5 rounded-full bg-[#7E57C2]"></div>';
-
-        btnYes.className = 'p-3.5 rounded-2xl border-2 text-left transition flex items-center gap-3 bg-white border-pink-200/80 text-slate-600 hover:bg-pink-50/40';
-        radioYes.className = 'w-5 h-5 rounded-full border-2 border-pink-300 flex items-center justify-center shrink-0';
-        radioYes.innerHTML = '';
+      if (state.isPeriodStart) {
+        btn.className = 'w-full p-4 rounded-2xl border-2 text-left transition flex items-center justify-between gap-3 bg-[#FCE4EC] border-[#EC407A] shadow-xs';
+        box.className = 'w-6 h-6 rounded-xl border-2 border-[#EC407A] bg-[#EC407A] flex items-center justify-center shrink-0 text-white text-xs font-bold';
+        box.textContent = '✓';
+        title.className = 'text-sm font-extrabold text-[#AD1457]';
+        status.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#EC407A] text-white shrink-0';
+        status.textContent = '開始日として記録中';
       } else {
-        btnNo.className = 'p-3.5 rounded-2xl border-2 text-left transition flex items-center gap-3 bg-white border-slate-200 text-slate-500 hover:bg-slate-50';
-        radioNo.className = 'w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center shrink-0';
-        radioNo.innerHTML = '';
-
-        btnYes.className = 'p-3.5 rounded-2xl border-2 text-left transition flex items-center gap-3 bg-[#FCE4EC] border-[#EC407A] shadow-xs';
-        radioYes.className = 'w-5 h-5 rounded-full border-2 border-[#EC407A] flex items-center justify-center shrink-0';
-        radioYes.innerHTML = '<div class="w-2.5 h-2.5 rounded-full bg-[#EC407A]"></div>';
+        btn.className = 'w-full p-4 rounded-2xl border-2 text-left transition flex items-center justify-between gap-3 bg-white border-pink-200/80 text-slate-700 hover:bg-pink-50/40';
+        box.className = 'w-6 h-6 rounded-xl border-2 border-pink-300 flex items-center justify-center shrink-0 text-white text-xs font-bold';
+        box.textContent = '';
+        title.className = 'text-sm font-extrabold text-slate-800';
+        status.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-500 shrink-0';
+        status.textContent = '未選択';
       }
     }
 
@@ -1802,11 +2053,6 @@
       updateSavedBadgesAndVisibility();
     }
 
-    function openEveningSection() {
-      state.eveningSectionOpen = true;
-      updateSavedBadgesAndVisibility();
-    }
-
     // ========================================================================
     // 保存・編集・削除・データ管理
     // ========================================================================
@@ -1912,6 +2158,7 @@
 
     function clearAllRecords() {
       state.selectedNavDate = getTodayStr();
+      state.historyFilterTag = null;
       persistRecords([]);
       syncFormFromDate(getTodayStr());
       document.getElementById('data-menu').classList.add('hidden');
@@ -1956,6 +2203,16 @@
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
             state.records = parsed;
+          }
+        }
+        const savedTags = localStorage.getItem(CUSTOM_TAGS_KEY);
+        if (savedTags) {
+          const parsedTags = JSON.parse(savedTags);
+          if (Array.isArray(parsedTags.conditionOptions)) {
+            state.conditionOptions = parsedTags.conditionOptions;
+          }
+          if (Array.isArray(parsedTags.selfCareOptions)) {
+            state.selfCareOptions = parsedTags.selfCareOptions;
           }
         }
       } catch (e) {
