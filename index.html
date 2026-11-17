@@ -207,7 +207,7 @@
       </section>
 
       <!-- バイオリズム相関バロメーター（複合グラフ） -->
-      <section class="rounded-3xl p-5 sm:p-6 bg-white/95 border border-purple-100 shadow-sm space-y-4">
+      <section class="rounded-3xl p-4 sm:p-6 bg-white/95 border border-purple-100 shadow-sm space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 class="text-base sm:text-lg font-extrabold text-[#4A3B69] flex items-center gap-2">
@@ -229,20 +229,20 @@
 
         <!-- 凡例＆ライン表示トグル -->
         <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
-          <div class="flex flex-wrap items-center gap-2 text-xs">
-            <button type="button" id="toggle-temp" onclick="toggleLine('temp')" class="px-3 py-1 rounded-full font-bold border transition flex items-center gap-1.5 bg-[#FCE4EC] border-[#F48FB1] text-[#AD1457]">
+          <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs">
+            <button type="button" id="toggle-temp" onclick="toggleLine('temp')" class="px-2.5 sm:px-3 py-1 rounded-full font-bold border transition flex items-center gap-1.5 bg-[#FCE4EC] border-[#F48FB1] text-[#AD1457]">
               <span class="w-2.5 h-2.5 rounded-full bg-[#EC407A]"></span>
               <span>基礎体温（左軸）</span>
             </button>
-            <button type="button" id="toggle-mood" onclick="toggleLine('mood')" class="px-3 py-1 rounded-full font-bold border transition flex items-center gap-1.5 bg-[#F3E8FF] border-[#CE93D8] text-[#5E35B1]">
+            <button type="button" id="toggle-mood" onclick="toggleLine('mood')" class="px-2.5 sm:px-3 py-1 rounded-full font-bold border transition flex items-center gap-1.5 bg-[#F3E8FF] border-[#CE93D8] text-[#5E35B1]">
               <span class="w-2.5 h-2.5 rounded-full bg-[#7E57C2]"></span>
               <span>気分スコア（右軸）</span>
             </button>
-            <button type="button" id="toggle-sleep" onclick="toggleLine('sleep')" class="px-3 py-1 rounded-full font-bold border transition flex items-center gap-1.5 bg-[#E0F2FE] border-[#7DD3FC] text-[#0369A1]">
+            <button type="button" id="toggle-sleep" onclick="toggleLine('sleep')" class="px-2.5 sm:px-3 py-1 rounded-full font-bold border transition flex items-center gap-1.5 bg-[#E0F2FE] border-[#7DD3FC] text-[#0369A1]">
               <span class="w-2.5 h-2.5 rounded-full bg-[#38BDF8]"></span>
               <span>睡眠時間</span>
             </button>
-            <button type="button" id="toggle-energy" onclick="toggleLine('energy')" class="px-3 py-1 rounded-full font-bold border transition flex items-center gap-1.5 bg-slate-50 border-slate-200 text-slate-400">
+            <button type="button" id="toggle-energy" onclick="toggleLine('energy')" class="px-2.5 sm:px-3 py-1 rounded-full font-bold border transition flex items-center gap-1.5 bg-slate-50 border-slate-200 text-slate-400">
               <span class="w-2.5 h-2.5 rounded-full bg-[#26A69A]"></span>
               <span>元気度</span>
             </button>
@@ -256,8 +256,8 @@
           </div>
         </div>
 
-        <!-- SVG複合グラフ描画先 -->
-        <div id="chart-container" class="w-full overflow-x-auto pb-2"></div>
+        <!-- SVG複合グラフ描画先（画面幅に自動フィット・横スクロール不要） -->
+        <div id="chart-container" class="w-full overflow-hidden"></div>
       </section>
 
       <!-- 独立セクション①：タグで日付を追跡・抽出（全期間検索） -->
@@ -831,7 +831,7 @@
         </div>
       </section>
 
-      <!-- 分析④＆⑤：体の時期ごとの平均 ＆ セルフケアランキング -->
+      <!-- 分析④＆⑤：体の時期別の平均 ＆ セルフケアランキング -->
       <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="rounded-3xl p-5 sm:p-6 bg-white/95 border border-purple-100 shadow-sm space-y-4">
           <h3 class="text-base font-extrabold text-[#4A3B69]">
@@ -1347,11 +1347,14 @@
         return;
       }
 
-      const width = Math.max(680, data.length * 48);
-      const height = 270;
-      const padLeft = 48;
-      const padRight = 44;
-      const padTop = 24;
+      // 横スクロール不要で画面幅にピタッと収まるレスポンシブ設計
+      const containerW = container.clientWidth || 340;
+      const width = Math.max(300, containerW);
+      const isCompact = width < 520;
+      const height = isCompact ? 235 : 270;
+      const padLeft = isCompact ? 38 : 48;
+      const padRight = isCompact ? 24 : 44;
+      const padTop = 22;
       const padBottom = 38;
       const plotW = width - padLeft - padRight;
       const plotH = height - padTop - padBottom;
@@ -1360,7 +1363,14 @@
       const minTemp = validTemps.length > 0 ? Math.min(35.9, Math.floor((Math.min(...validTemps) - 0.1) * 10) / 10) : 35.9;
       const maxTemp = validTemps.length > 0 ? Math.max(37.0, Math.ceil((Math.max(...validTemps) + 0.1) * 10) / 10) : 37.0;
 
-      const getX = (index) => (data.length === 1 ? padLeft + plotW / 2 : padLeft + (index / (data.length - 1)) * plotW);
+      // 左右のラベルが切れないよう内側に少し余白を持たせて点を配置
+      const innerInset = Math.min(18, Math.max(8, plotW * 0.04));
+      const usableW = Math.max(10, plotW - innerInset * 2);
+
+      const getX = (index) => {
+        if (data.length === 1) return padLeft + plotW / 2;
+        return padLeft + innerInset + (index / (data.length - 1)) * usableW;
+      };
       const getTempY = (temp) => padTop + plotH - ((temp - minTemp) / (maxTemp - minTemp || 1)) * plotH;
       const getScoreY = (val, minV = 1, maxV = 5) => {
         const clamped = Math.max(minV, Math.min(maxV, val));
@@ -1428,20 +1438,26 @@
       const energyPoints = buildPolyline((d) => (typeof d.energy === 'number' ? getScoreY(d.energy, 1, 5) : null));
       const sleepPoints = buildPolyline((d) => (typeof d.sleep === 'number' ? getScoreY(d.sleep, 3, 10) : null));
 
-      const stepW = data.length > 1 ? plotW / (data.length - 1) : plotW;
+      const stepW = data.length > 1 ? usableW / (data.length - 1) : plotW;
       const activeDate = (analysis.enriched.find((r) => r.date === state.selectedNavDate) || analysis.enriched[analysis.enriched.length - 1])?.date;
 
-      let svg = `<div style="min-width: ${Math.min(width, 960)}px"><svg viewBox="0 0 ${width} ${height}" class="w-full h-auto select-none overflow-visible">`;
+      // X軸ラベルが重ならないように表示間隔を自動計算
+      const minLabelSpacing = isCompact ? 46 : 56;
+      const maxLabels = Math.max(2, Math.floor(usableW / minLabelSpacing));
+      const labelStep = Math.max(1, Math.ceil((data.length - 1) / Math.max(1, maxLabels - 1)));
+
+      let svg = `<svg viewBox="0 0 ${width} ${height}" class="w-full h-auto block select-none">`;
 
       data.forEach((d, i) => {
         const stageObj = STAGES[d.effectiveStage] || STAGES.follicular;
         const cx = getX(i);
         const bandX = i === 0 ? padLeft : cx - stepW / 2;
-        const bandW = data.length === 1 ? plotW : i === 0 || i === data.length - 1 ? stepW / 2 : stepW;
+        const bandEnd = i === data.length - 1 ? padLeft + plotW : cx + stepW / 2;
+        const bandW = Math.max(1, bandEnd - bandX);
         const isSelected = d.date === activeDate;
-        svg += `<rect x="${bandX}" y="${padTop}" width="${bandW}" height="${plotH}" fill="${stageObj.bgHex}" opacity="${isSelected ? 0.95 : 0.65}" />`;
+        svg += `<rect x="${bandX.toFixed(1)}" y="${padTop}" width="${bandW.toFixed(1)}" height="${plotH}" fill="${stageObj.bgHex}" opacity="${isSelected ? 0.95 : 0.65}" />`;
         if (isSelected) {
-          svg += `<line x1="${cx}" y1="${padTop}" x2="${cx}" y2="${padTop + plotH}" stroke="#7E57C2" stroke-width="2" stroke-dasharray="4 3" />`;
+          svg += `<line x1="${cx.toFixed(1)}" y1="${padTop}" x2="${cx.toFixed(1)}" y2="${padTop + plotH}" stroke="#7E57C2" stroke-width="2" stroke-dasharray="4 3" />`;
         }
       });
 
@@ -1449,20 +1465,21 @@
         const y = padTop + plotH - ratio * plotH;
         const tempLabel = (minTemp + ratio * (maxTemp - minTemp)).toFixed(2);
         const scoreLabel = (1 + ratio * 4).toFixed(0);
-        svg += `<line x1="${padLeft}" y1="${y}" x2="${padLeft + plotW}" y2="${y}" stroke="#E9D5FF" stroke-width="1" ${idx === 0 ? '' : 'stroke-dasharray="3 3"'} />`;
-        svg += `<text x="${padLeft - 6}" y="${y + 3}" text-anchor="end" font-size="10" fill="#AD1457" font-weight="600">${tempLabel}°</text>`;
-        svg += `<text x="${padLeft + plotW + 6}" y="${y + 3}" text-anchor="start" font-size="10" fill="#5E35B1" font-weight="600">${scoreLabel}</text>`;
+        const axisFontSize = isCompact ? '9' : '10';
+        svg += `<line x1="${padLeft}" y1="${y.toFixed(1)}" x2="${padLeft + plotW}" y2="${y.toFixed(1)}" stroke="#E9D5FF" stroke-width="1" ${idx === 0 ? '' : 'stroke-dasharray="3 3"'} />`;
+        svg += `<text x="${padLeft - 4}" y="${(y + 3).toFixed(1)}" text-anchor="end" font-size="${axisFontSize}" fill="#AD1457" font-weight="600">${tempLabel}°</text>`;
+        svg += `<text x="${padLeft + plotW + 5}" y="${(y + 3).toFixed(1)}" text-anchor="start" font-size="${axisFontSize}" fill="#5E35B1" font-weight="600">${scoreLabel}</text>`;
       });
 
       if (state.showSleep && sleepPoints) svg += `<polyline fill="none" stroke="#38BDF8" stroke-width="2" stroke-dasharray="5 3" points="${sleepPoints}" />`;
       if (state.showEnergy && energyPoints) svg += `<polyline fill="none" stroke="#26A69A" stroke-width="2" points="${energyPoints}" />`;
-      if (state.showMood && moodPoints) svg += `<polyline fill="none" stroke="#7E57C2" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" points="${moodPoints}" />`;
+      if (state.showMood && moodPoints) svg += `<polyline fill="none" stroke="#7E57C2" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" points="${moodPoints}" />`;
       if (state.showTemp) {
         tempDashedBridges.forEach((b) => {
           svg += `<line x1="${b.x1.toFixed(1)}" y1="${b.y1.toFixed(1)}" x2="${b.x2.toFixed(1)}" y2="${b.y2.toFixed(1)}" stroke="#F48FB1" stroke-width="2" stroke-dasharray="4 4" />`;
         });
         tempSolidLines.forEach((pts) => {
-          svg += `<polyline fill="none" stroke="#EC407A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${pts}" />`;
+          svg += `<polyline fill="none" stroke="#EC407A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" points="${pts}" />`;
         });
       }
 
@@ -1478,36 +1495,54 @@
           ? '#2563EB'
           : '#64748B';
 
+        const hitX = i === 0 ? padLeft : cx - stepW / 2;
+        const hitW = data.length === 1 ? plotW : stepW;
+
         svg += `<g onclick="selectNavDate('${d.date}')" class="cursor-pointer">`;
-        svg += `<rect x="${cx - stepW / 2}" y="${padTop}" width="${stepW}" height="${plotH + padBottom}" fill="transparent" />`;
+        svg += `<rect x="${hitX.toFixed(1)}" y="${padTop}" width="${hitW.toFixed(1)}" height="${plotH + padBottom}" fill="transparent" />`;
 
         if (d.isPeriodStart) {
-          svg += `<g transform="translate(${cx}, ${padTop - 10})"><circle r="7" fill="#EC407A" /><text text-anchor="middle" y="3" font-size="8" fill="#FFFFFF" font-weight="bold">生</text></g>`;
+          svg += `<g transform="translate(${cx.toFixed(1)}, ${padTop - 10})"><circle r="6.5" fill="#EC407A" /><text text-anchor="middle" y="3" font-size="8" fill="#FFFFFF" font-weight="bold">生</text></g>`;
         } else if (d.isGapDay) {
-          svg += `<g transform="translate(${cx}, ${padTop - 10})"><circle r="7" fill="#F59E0B" /><text text-anchor="middle" y="3" font-size="9" fill="#FFFFFF" font-weight="bold">!</text></g>`;
+          svg += `<g transform="translate(${cx.toFixed(1)}, ${padTop - 10})"><circle r="6.5" fill="#F59E0B" /><text text-anchor="middle" y="3" font-size="8.5" fill="#FFFFFF" font-weight="bold">!</text></g>`;
         }
+
+        const rSmall = data.length > 20 ? 2.4 : 3;
+        const rMain = data.length > 20 ? 3.2 : 3.8;
+        const rSel = data.length > 20 ? 4.5 : 5.2;
 
         if (state.showSleep && typeof d.sleep === 'number') {
-          svg += `<circle cx="${cx}" cy="${getScoreY(d.sleep, 3, 10)}" r="${isSelected ? 4.5 : 3}" fill="#38BDF8" stroke="#FFFFFF" stroke-width="1.2" />`;
+          svg += `<circle cx="${cx.toFixed(1)}" cy="${getScoreY(d.sleep, 3, 10).toFixed(1)}" r="${isSelected ? rSel - 0.8 : rSmall}" fill="#38BDF8" stroke="#FFFFFF" stroke-width="1.2" />`;
         }
         if (state.showEnergy && typeof d.energy === 'number') {
-          svg += `<circle cx="${cx}" cy="${getScoreY(d.energy, 1, 5)}" r="${isSelected ? 4.5 : 3}" fill="#26A69A" stroke="#FFFFFF" stroke-width="1.2" />`;
+          svg += `<circle cx="${cx.toFixed(1)}" cy="${getScoreY(d.energy, 1, 5).toFixed(1)}" r="${isSelected ? rSel - 0.8 : rSmall}" fill="#26A69A" stroke="#FFFFFF" stroke-width="1.2" />`;
         }
         if (state.showMood && typeof d.mood === 'number') {
-          svg += `<circle cx="${cx}" cy="${getScoreY(d.mood, 1, 5)}" r="${isSelected ? 5.5 : 3.8}" fill="#7E57C2" stroke="#FFFFFF" stroke-width="1.5" />`;
+          svg += `<circle cx="${cx.toFixed(1)}" cy="${getScoreY(d.mood, 1, 5).toFixed(1)}" r="${isSelected ? rSel : rMain}" fill="#7E57C2" stroke="#FFFFFF" stroke-width="1.4" />`;
         }
         if (state.showTemp && typeof d.temperature === 'number') {
-          svg += `<circle cx="${cx}" cy="${getTempY(d.temperature)}" r="${isSelected ? 5.5 : 3.8}" fill="#EC407A" stroke="#FFFFFF" stroke-width="1.5" />`;
+          svg += `<circle cx="${cx.toFixed(1)}" cy="${getTempY(d.temperature).toFixed(1)}" r="${isSelected ? rSel : rMain}" fill="#EC407A" stroke="#FFFFFF" stroke-width="1.4" />`;
         }
 
-        svg += `<text x="${cx}" y="${padTop + plotH + 16}" text-anchor="middle" font-size="9.5" fill="${labelColor}" font-weight="${isSelected || dayIndex === 0 || dayIndex === 6 ? '700' : '500'}">${formatShortDate(d.date)}</text>`;
-        if (d.cycleDay) {
-          svg += `<text x="${cx}" y="${padTop + plotH + 28}" text-anchor="middle" font-size="8.5" fill="#94A3B8">${d.cycleDay}日目</text>`;
+        // X軸日付ラベル（重ならないように自動間引き）
+        const isLast = i === data.length - 1;
+        const showLabel =
+          data.length <= 7 ||
+          isLast ||
+          (i % labelStep === 0 && (data.length - 1 - i) >= Math.ceil(labelStep * 0.55));
+
+        if (showLabel) {
+          const anchor = i === 0 && data.length > 2 ? 'start' : isLast && data.length > 2 ? 'end' : 'middle';
+          const textX = anchor === 'start' ? Math.max(padLeft + 2, cx - 8) : anchor === 'end' ? Math.min(padLeft + plotW - 2, cx + 8) : cx;
+          svg += `<text x="${textX.toFixed(1)}" y="${padTop + plotH + 15}" text-anchor="${anchor}" font-size="${isCompact ? '9' : '9.5'}" fill="${labelColor}" font-weight="${isSelected || dayIndex === 0 || dayIndex === 6 ? '700' : '500'}">${formatShortDate(d.date)}</text>`;
+          if (d.cycleDay) {
+            svg += `<text x="${textX.toFixed(1)}" y="${padTop + plotH + 27}" text-anchor="${anchor}" font-size="8" fill="#94A3B8">${d.cycleDay}日目</text>`;
+          }
         }
         svg += `</g>`;
       });
 
-      svg += `</svg></div>`;
+      svg += `</svg>`;
       container.innerHTML = svg;
     }
 
@@ -2016,6 +2051,7 @@
         homeView.classList.remove('hidden');
         btnHome.className = activeClass;
         if (stickyBar) stickyBar.classList.add('hidden');
+        renderAll();
       } else if (tab === 'record') {
         recordView.classList.remove('hidden');
         btnRecord.className = activeClass;
@@ -2057,7 +2093,7 @@
       const cfg = map[type];
       state[cfg.key] = !state[cfg.key];
       const btn = document.getElementById(`toggle-${type}`);
-      btn.className = `px-3 py-1 rounded-full font-bold border transition flex items-center gap-1.5 ${state[cfg.key] ? cfg.active : 'bg-slate-50 border-slate-200 text-slate-400'}`;
+      btn.className = `px-2.5 sm:px-3 py-1 rounded-full font-bold border transition flex items-center gap-1.5 ${state[cfg.key] ? cfg.active : 'bg-slate-50 border-slate-200 text-slate-400'}`;
       renderAll();
     }
 
@@ -2356,8 +2392,18 @@
     }
 
     // ========================================================================
-    // 初期化（初回起動時は空の状態でスタート）
+    // 初期化＆リサイズ再描画
     // ========================================================================
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (state.activeTab === 'home') {
+          renderChart(analyzeRecords(state.records));
+        }
+      }, 120);
+    });
+
     window.addEventListener('DOMContentLoaded', () => {
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
@@ -2387,3 +2433,6 @@
   </script>
 </body>
 </html>
+```
+
+横スライドなしでスマホの画面幅いっぱいにピタッと収まり、右側の軸や日付ラベルも見切れずに表示されるようになりました！
