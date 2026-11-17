@@ -131,7 +131,7 @@
   <main class="max-w-5xl mx-auto px-4 pt-5 space-y-6">
 
     <!-- ==================================================================
-         1. ホームタブ（バロメーター確認・解説・履歴閲覧に特化）
+         1. ホームタブ（バロメーター確認・解説・抽出・履歴閲覧に特化）
          ================================================================== -->
     <div id="view-home" class="space-y-6">
 
@@ -260,36 +260,51 @@
         <div id="chart-container" class="w-full overflow-x-auto pb-2"></div>
       </section>
 
-      <!-- これまでの記録一覧（タグ別日付抽出フィルター付き） -->
-      <section class="rounded-3xl p-5 sm:p-6 bg-white/95 border border-purple-100 shadow-sm space-y-4">
+      <!-- 独立セクション①：タグで日付を追跡・抽出（全期間検索） -->
+      <section id="tag-extract-section" class="rounded-3xl p-5 sm:p-6 bg-white/95 border border-purple-100 shadow-sm space-y-3.5">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 id="history-heading" class="text-base sm:text-lg font-extrabold text-[#4A3B69]">
-              これまでの記録（直近10件）
+            <h2 class="text-base sm:text-lg font-extrabold text-[#4A3B69] flex items-center gap-1.5">
+              <span>🔍</span>
+              <span>タグで日付を追跡・抽出（全期間）</span>
             </h2>
-            <p class="text-[11px] text-slate-500">
-              下のタグを押すと「その症状・習慣があった日」だけを全期間から抽出できます
+            <p class="text-xs text-slate-500 mt-0.5">
+              気になる症状や習慣をタップすると、過去の全記録から該当日だけを一覧で抽出します
             </p>
           </div>
-          <span id="records-total-count" class="text-xs text-slate-400">全 0 件</span>
+          <button
+            type="button"
+            id="btn-clear-history-filter"
+            onclick="setHistoryFilter(null)"
+            class="hidden px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-[#EC407A] hover:bg-rose-100 transition"
+          >
+            ✕ 抽出を閉じる
+          </button>
         </div>
 
-        <!-- タグ別日付抽出フィルターバー -->
-        <div id="history-filter-bar" class="p-3 rounded-2xl bg-[#FAF7FF] border border-purple-100 space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold text-[#5E35B1]">🔍 タグで日付を追跡・抽出：</span>
-            <button
-              type="button"
-              id="btn-clear-history-filter"
-              onclick="setHistoryFilter(null)"
-              class="hidden text-[11px] font-bold text-[#EC407A] hover:underline"
-            >
-              ✕ 絞り込みを解除
-            </button>
-          </div>
-          <div id="history-filter-chips" class="flex flex-wrap gap-1.5">
+        <!-- タグ一覧チップ -->
+        <div id="history-filter-chips" class="flex flex-wrap gap-1.5">
+          <!-- JSで描画 -->
+        </div>
+
+        <!-- 抽出結果エリア（タグ選択時のみ展開） -->
+        <div id="extracted-results-wrapper" class="hidden pt-3 border-t border-purple-100 space-y-2.5">
+          <div id="extracted-heading" class="text-xs sm:text-sm font-extrabold text-[#5E35B1]">
             <!-- JSで描画 -->
           </div>
+          <div id="extracted-list" class="space-y-2.5">
+            <!-- JSで描画 -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 独立セクション②：これまでの記録（直近10件） -->
+      <section class="rounded-3xl p-5 sm:p-6 bg-white/95 border border-purple-100 shadow-sm space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base sm:text-lg font-extrabold text-[#4A3B69]">
+            これまでの記録（直近10件）
+          </h2>
+          <span id="records-total-count" class="text-xs text-slate-400">全 0 件</span>
         </div>
 
         <div id="history-list" class="space-y-2.5">
@@ -324,6 +339,9 @@
               onchange="onFormDateChange(this.value)"
               class="text-xs sm:text-sm font-bold text-[#4A3B69] focus:outline-none cursor-pointer"
             />
+            <span id="form-date-weekday" class="px-2 py-0.5 rounded-lg text-xs font-extrabold bg-[#F3E8FF] text-[#5E35B1]">
+              (火)
+            </span>
           </div>
         </div>
 
@@ -387,15 +405,20 @@
             </button>
           </div>
 
-          <!-- STEP 2：今朝の基礎体温 -->
+          <!-- STEP 2：今朝の基礎体温（未入力・スキップ対応） -->
           <div class="space-y-2.5 pt-2 border-t border-purple-50">
-            <div class="flex items-center gap-2">
-              <span class="px-2.5 py-0.5 rounded-lg bg-[#EC407A] text-white text-xs font-bold">
-                STEP 2（入力）
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded-lg bg-[#EC407A] text-white text-xs font-bold">
+                  STEP 2（任意）
+                </span>
+                <h4 class="text-sm font-bold text-slate-800">
+                  🌡️ 今朝の基礎体温
+                </h4>
+              </div>
+              <span class="text-[11px] text-slate-400">
+                ※測れなかった日は空欄のままでOK
               </span>
-              <h4 class="text-sm font-bold text-slate-800">
-                🌡️ 今朝の基礎体温
-              </h4>
             </div>
 
             <div class="bg-[#FFF5F8] rounded-2xl p-3.5 border border-pink-100 flex flex-wrap items-center justify-between gap-3">
@@ -406,10 +429,18 @@
                   step="0.01"
                   min="34.00"
                   max="42.00"
-                  value="36.35"
-                  class="w-28 px-3 py-2 rounded-xl bg-white border-2 border-pink-200 text-lg font-extrabold text-[#AD1457] text-center focus:outline-none focus:border-[#EC407A]"
+                  placeholder="未入力"
+                  value=""
+                  class="w-28 px-3 py-2 rounded-xl bg-white border-2 border-pink-200 text-lg font-extrabold text-[#AD1457] placeholder:text-slate-300 placeholder:font-bold placeholder:text-sm text-center focus:outline-none focus:border-[#EC407A]"
                 />
                 <span class="text-sm font-bold text-[#AD1457]">℃</span>
+                <button
+                  type="button"
+                  onclick="clearTempInput()"
+                  class="ml-1 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-500 text-[11px] font-bold hover:bg-slate-50 transition"
+                >
+                  未入力に戻す
+                </button>
               </div>
 
               <div class="flex items-center gap-1.5">
@@ -517,7 +548,7 @@
 
             <div id="stage-auto-note" class="rounded-2xl p-3.5 bg-[#F5F0FF] border border-purple-200 text-xs text-[#4A3B69] leading-relaxed">
               💡 <strong>自動判定では、記録された「生理開始日」と「基礎体温の変化」から現在の時期を自動で判断します。</strong>
-              専門知識がなくてもこのままで大丈夫です！
+              体温が未入力の日でも、生理開始日からの日数で自動で時期を判定するので安心です！
             </div>
 
             <div id="stage-manual-grid" class="hidden grid-cols-2 sm:grid-cols-4 gap-2">
@@ -967,9 +998,24 @@
       return Math.round((b - a) / (1000 * 60 * 60 * 24));
     }
 
+    const WEEKDAYS_JA = ['日', '月', '火', '水', '木', '金', '土'];
+
+    function getWeekdayInfo(dateStr) {
+      const d = new Date(`${dateStr}T00:00:00`);
+      if (isNaN(d.getTime())) return { label: '', dayIndex: -1 };
+      const dayIndex = d.getDay();
+      return { label: WEEKDAYS_JA[dayIndex], dayIndex };
+    }
+
+    function formatDateWithWeekday(dateStr) {
+      const { label } = getWeekdayInfo(dateStr);
+      return label ? `${dateStr} (${label})` : dateStr;
+    }
+
     function formatShortDate(dateStr) {
       const [, m, d] = dateStr.split('-');
-      return `${Number(m)}/${Number(d)}`;
+      const { label } = getWeekdayInfo(dateStr);
+      return label ? `${Number(m)}/${Number(d)}(${label})` : `${Number(m)}/${Number(d)}`;
     }
 
     function escapeHtml(str) {
@@ -1198,6 +1244,7 @@
       renderGreetingBanner();
       renderNavCard(analysis);
       renderChart(analysis);
+      renderTagExtractor(analysis);
       renderHistoryList(analysis);
       renderInsights(analysis);
     }
@@ -1222,7 +1269,8 @@
       const emptyState = document.getElementById('nav-empty-state');
       const contentGrid = document.getElementById('nav-content-grid');
 
-      document.getElementById('nav-date-badge').textContent = `📅 ${activeRec?.date || getTodayStr()}${activeRec?.cycleDay ? `（周期 ${activeRec.cycleDay}日目）` : ''}`;
+      const displayDateStr = formatDateWithWeekday(activeRec?.date || getTodayStr());
+      document.getElementById('nav-date-badge').textContent = `📅 ${displayDateStr}${activeRec?.cycleDay ? `（周期 ${activeRec.cycleDay}日目）` : ''}`;
       document.getElementById('nav-avg-cycle').textContent = `※平均周期 ${analysis.avgCycleLength}日基準`;
 
       if (!activeRec) {
@@ -1285,7 +1333,7 @@
         `;
       }
 
-      document.getElementById('nav-stat-temp').textContent = typeof activeRec.temperature === 'number' ? `${activeRec.temperature.toFixed(2)}℃` : '--';
+      document.getElementById('nav-stat-temp').textContent = typeof activeRec.temperature === 'number' ? `${activeRec.temperature.toFixed(2)}℃` : '未計測';
       document.getElementById('nav-stat-sleep').textContent = typeof activeRec.sleep === 'number' ? `${activeRec.sleep.toFixed(1)}h` : '--';
       document.getElementById('nav-stat-mood').textContent = typeof activeRec.mood === 'number' ? `${activeRec.mood} / 5` : 'Nightで入力';
     }
@@ -1299,7 +1347,7 @@
         return;
       }
 
-      const width = Math.max(640, data.length * 42);
+      const width = Math.max(680, data.length * 48);
       const height = 270;
       const padLeft = 48;
       const padRight = 44;
@@ -1328,7 +1376,54 @@
         return pts.join(' ');
       };
 
-      const tempPoints = buildPolyline((d) => (typeof d.temperature === 'number' ? getTempY(d.temperature) : null));
+      // 体温専用のセグメント分割（連続日は実線、1〜2日欠測は点線ブリッジ、3日以上空きは線を切断）
+      const buildTempSegments = () => {
+        const validPoints = [];
+        data.forEach((d, i) => {
+          if (typeof d.temperature === 'number') {
+            validPoints.push({
+              date: d.date,
+              x: getX(i),
+              y: getTempY(d.temperature),
+            });
+          }
+        });
+
+        const solidPolylines = [];
+        const dashedBridges = [];
+        let currentGroup = [];
+
+        for (let i = 0; i < validPoints.length; i++) {
+          const pt = validPoints[i];
+          if (currentGroup.length === 0) {
+            currentGroup.push(pt);
+          } else {
+            const prev = currentGroup[currentGroup.length - 1];
+            const gapDays = diffDays(prev.date, pt.date);
+            if (gapDays <= 1) {
+              currentGroup.push(pt);
+            } else {
+              if (currentGroup.length >= 2) {
+                solidPolylines.push(
+                  currentGroup.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
+                );
+              }
+              if (gapDays <= 3) {
+                dashedBridges.push({ x1: prev.x, y1: prev.y, x2: pt.x, y2: pt.y });
+              }
+              currentGroup = [pt];
+            }
+          }
+        }
+        if (currentGroup.length >= 2) {
+          solidPolylines.push(
+            currentGroup.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
+          );
+        }
+        return { solidPolylines, dashedBridges };
+      };
+
+      const { solidPolylines: tempSolidLines, dashedBridges: tempDashedBridges } = buildTempSegments();
       const moodPoints = buildPolyline((d) => (typeof d.mood === 'number' ? getScoreY(d.mood, 1, 5) : null));
       const energyPoints = buildPolyline((d) => (typeof d.energy === 'number' ? getScoreY(d.energy, 1, 5) : null));
       const sleepPoints = buildPolyline((d) => (typeof d.sleep === 'number' ? getScoreY(d.sleep, 3, 10) : null));
@@ -1362,11 +1457,27 @@
       if (state.showSleep && sleepPoints) svg += `<polyline fill="none" stroke="#38BDF8" stroke-width="2" stroke-dasharray="5 3" points="${sleepPoints}" />`;
       if (state.showEnergy && energyPoints) svg += `<polyline fill="none" stroke="#26A69A" stroke-width="2" points="${energyPoints}" />`;
       if (state.showMood && moodPoints) svg += `<polyline fill="none" stroke="#7E57C2" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" points="${moodPoints}" />`;
-      if (state.showTemp && tempPoints) svg += `<polyline fill="none" stroke="#EC407A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${tempPoints}" />`;
+      if (state.showTemp) {
+        tempDashedBridges.forEach((b) => {
+          svg += `<line x1="${b.x1.toFixed(1)}" y1="${b.y1.toFixed(1)}" x2="${b.x2.toFixed(1)}" y2="${b.y2.toFixed(1)}" stroke="#F48FB1" stroke-width="2" stroke-dasharray="4 4" />`;
+        });
+        tempSolidLines.forEach((pts) => {
+          svg += `<polyline fill="none" stroke="#EC407A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${pts}" />`;
+        });
+      }
 
       data.forEach((d, i) => {
         const cx = getX(i);
         const isSelected = d.date === activeDate;
+        const { dayIndex } = getWeekdayInfo(d.date);
+        const labelColor = isSelected
+          ? '#5E35B1'
+          : dayIndex === 0
+          ? '#E11D48'
+          : dayIndex === 6
+          ? '#2563EB'
+          : '#64748B';
+
         svg += `<g onclick="selectNavDate('${d.date}')" class="cursor-pointer">`;
         svg += `<rect x="${cx - stepW / 2}" y="${padTop}" width="${stepW}" height="${plotH + padBottom}" fill="transparent" />`;
 
@@ -1389,7 +1500,7 @@
           svg += `<circle cx="${cx}" cy="${getTempY(d.temperature)}" r="${isSelected ? 5.5 : 3.8}" fill="#EC407A" stroke="#FFFFFF" stroke-width="1.5" />`;
         }
 
-        svg += `<text x="${cx}" y="${padTop + plotH + 16}" text-anchor="middle" font-size="10" fill="${isSelected ? '#5E35B1' : '#64748B'}" font-weight="${isSelected ? '700' : '500'}">${formatShortDate(d.date)}</text>`;
+        svg += `<text x="${cx}" y="${padTop + plotH + 16}" text-anchor="middle" font-size="9.5" fill="${labelColor}" font-weight="${isSelected || dayIndex === 0 || dayIndex === 6 ? '700' : '500'}">${formatShortDate(d.date)}</text>`;
         if (d.cycleDay) {
           svg += `<text x="${cx}" y="${padTop + plotH + 28}" text-anchor="middle" font-size="8.5" fill="#94A3B8">${d.cycleDay}日目</text>`;
         }
@@ -1405,10 +1516,55 @@
       renderAll();
     }
 
-    function renderHistoryList(analysis) {
-      document.getElementById('records-total-count').textContent = `全 ${state.records.length} 件`;
+    function buildWeekdayBadgeHTML(dateStr) {
+      const { label, dayIndex } = getWeekdayInfo(dateStr);
+      if (!label) return '';
+      const badgeClass =
+        dayIndex === 0
+          ? 'bg-rose-100 text-rose-700'
+          : dayIndex === 6
+          ? 'bg-sky-100 text-sky-700'
+          : 'bg-slate-200/70 text-slate-600';
+      return `<span class="px-1.5 py-0.5 rounded-md text-[10px] font-extrabold ${badgeClass}">${label}</span>`;
+    }
 
-      // タグ別の使用回数を集計（履歴から追いかけられるチップ一覧を生成）
+    function buildRecordItemHTML(r) {
+      const st = STAGES[r.effectiveStage] || STAGES.follicular;
+      const moodObj = MOOD_OPTIONS.find((m) => m.value === r.mood);
+      const weekdayBadge = buildWeekdayBadgeHTML(r.date);
+      return `
+        <div class="p-3.5 rounded-2xl bg-[#FAF7FF] border border-purple-100 flex flex-wrap items-center justify-between gap-3 hover:border-purple-300 transition">
+          <div class="space-y-1">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="text-xs sm:text-sm font-extrabold text-[#4A3B69]">${r.date}</span>
+              ${weekdayBadge}
+              ${r.cycleDay ? `<span class="text-[11px] font-bold text-slate-500">(${r.cycleDay}日目)</span>` : ''}
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${st.badgeBg} ${st.badgeText}">${st.name}</span>
+              ${r.isPeriodStart ? `<span class="px-2 py-0.5 rounded-full bg-[#EC407A] text-white text-[10px] font-bold">生理開始日</span>` : ''}
+              ${r.isGapDay ? `<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] text-[10px] font-bold">ギャップ検出</span>` : ''}
+            </div>
+            <div class="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+              <span>体温：<strong class="${typeof r.temperature === 'number' ? 'text-[#C2185B]' : 'text-slate-400 font-medium'}">${typeof r.temperature === 'number' ? `${r.temperature.toFixed(2)}℃` : '未計測'}</strong></span>
+              <span>睡眠：<strong class="text-[#0284C7]">${typeof r.sleep === 'number' ? `${r.sleep.toFixed(1)}h` : '--'}</strong></span>
+              <span>気分：<strong class="text-[#5E35B1]">${moodObj ? `${moodObj.emoji} ${r.mood}/5` : 'Night未入力'}</strong></span>
+            </div>
+            ${(r.conditionTags?.length > 0 || r.selfCareTags?.length > 0 || r.memo) ? `
+              <div class="text-[11px] text-slate-500 flex flex-wrap items-center gap-1.5 pt-0.5">
+                ${r.conditionTags?.length > 0 ? `<span class="text-[#AD1457] font-medium">[${escapeHtml(r.conditionTags.join('・'))}]</span>` : ''}
+                ${r.selfCareTags?.length > 0 ? `<span class="text-[#00695C] font-medium">[${escapeHtml(r.selfCareTags.join('・'))}]</span>` : ''}
+                ${r.memo ? `<span>${escapeHtml(r.memo)}</span>` : ''}
+              </div>
+            ` : ''}
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button type="button" onclick="editRecord('${r.date}')" class="px-3 py-1.5 rounded-xl bg-white border border-purple-200 text-xs font-bold text-[#5E35B1] hover:bg-purple-50 transition">✎ 編集</button>
+            <button type="button" onclick="deleteRecord('${r.date}')" class="px-2.5 py-1.5 rounded-xl bg-white border border-rose-100 text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition text-xs" title="削除">🗑</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTagExtractor(analysis) {
       const condCountMap = {};
       const careCountMap = {};
       state.records.forEach((r) => {
@@ -1425,104 +1581,83 @@
         ...Object.entries(careCountMap).map(([tag, count]) => ({ tag, count, type: 'care' })),
       ];
 
-      const filterBar = document.getElementById('history-filter-bar');
+      const sectionEl = document.getElementById('tag-extract-section');
       const chipsEl = document.getElementById('history-filter-chips');
       const clearBtn = document.getElementById('btn-clear-history-filter');
+      const resultsWrapper = document.getElementById('extracted-results-wrapper');
+      const headingEl = document.getElementById('extracted-heading');
+      const listEl = document.getElementById('extracted-list');
 
       if (allFilterTags.length === 0) {
-        filterBar.classList.add('hidden');
-      } else {
-        filterBar.classList.remove('hidden');
-        if (state.historyFilterTag) {
-          clearBtn.classList.remove('hidden');
-        } else {
-          clearBtn.classList.add('hidden');
-        }
-
-        chipsEl.innerHTML = allFilterTags
-          .map(({ tag, count, type }) => {
-            const isSelected = state.historyFilterTag === tag;
-            const activeStyle =
-              type === 'cond'
-                ? 'bg-[#EC407A] border-[#EC407A] text-white shadow-xs'
-                : 'bg-[#26A69A] border-[#26A69A] text-white shadow-xs';
-            const inactiveStyle =
-              type === 'cond'
-                ? 'bg-white border-pink-200 text-[#AD1457] hover:bg-pink-50'
-                : 'bg-white border-teal-200 text-[#00695C] hover:bg-teal-50';
-            return `
-              <button
-                type="button"
-                onclick='setHistoryFilter(${JSON.stringify(tag)})'
-                class="px-2.5 py-1 rounded-full text-[11px] font-bold border transition ${
-                  isSelected ? activeStyle : inactiveStyle
-                }"
-              >
-                ${escapeHtml(tag)} (${count})
-              </button>
-            `;
-          })
-          .join('');
+        sectionEl.classList.add('hidden');
+        return;
       }
 
-      const listEl = document.getElementById('history-list');
-      const headingEl = document.getElementById('history-heading');
-      let reversed = [...analysis.enriched].reverse();
+      sectionEl.classList.remove('hidden');
 
-      if (state.historyFilterTag) {
-        reversed = reversed.filter(
+      chipsEl.innerHTML = allFilterTags
+        .map(({ tag, count, type }) => {
+          const isSelected = state.historyFilterTag === tag;
+          const activeStyle =
+            type === 'cond'
+              ? 'bg-[#EC407A] border-[#EC407A] text-white shadow-xs'
+              : 'bg-[#26A69A] border-[#26A69A] text-white shadow-xs';
+          const inactiveStyle =
+            type === 'cond'
+              ? 'bg-white border-pink-200 text-[#AD1457] hover:bg-pink-50'
+              : 'bg-white border-teal-200 text-[#00695C] hover:bg-teal-50';
+          return `
+            <button
+              type="button"
+              onclick='setHistoryFilter(${JSON.stringify(tag)})'
+              class="px-2.5 py-1 rounded-full text-[11px] font-bold border transition ${
+                isSelected ? activeStyle : inactiveStyle
+              }"
+            >
+              ${escapeHtml(tag)} (${count})
+            </button>
+          `;
+        })
+        .join('');
+
+      if (!state.historyFilterTag) {
+        clearBtn.classList.add('hidden');
+        resultsWrapper.classList.add('hidden');
+        return;
+      }
+
+      clearBtn.classList.remove('hidden');
+      resultsWrapper.classList.remove('hidden');
+
+      const matched = [...analysis.enriched]
+        .reverse()
+        .filter(
           (r) =>
             (r.conditionTags || []).includes(state.historyFilterTag) ||
             (r.selfCareTags || []).includes(state.historyFilterTag)
         );
-        headingEl.textContent = `「${state.historyFilterTag}」の記録一覧（${reversed.length}件）`;
-      } else {
-        reversed = reversed.slice(0, 10);
-        headingEl.textContent = 'これまでの記録（直近10件）';
-      }
 
-      if (reversed.length === 0) {
-        listEl.innerHTML = `<div class="py-6 text-center text-xs sm:text-sm text-slate-400">${
-          state.historyFilterTag
-            ? `「${escapeHtml(state.historyFilterTag)}」が記録された日はまだありません。`
-            : 'まだ記録がありません。'
-        }</div>`;
+      headingEl.textContent = `📌 「${state.historyFilterTag}」の抽出結果（全期間で ${matched.length}件）`;
+
+      if (matched.length === 0) {
+        listEl.innerHTML = `<div class="py-4 text-center text-xs text-slate-400">該当する記録はありません。</div>`;
+      } else {
+        listEl.innerHTML = matched.map((r) => buildRecordItemHTML(r)).join('');
+      }
+    }
+
+    function renderHistoryList(analysis) {
+      document.getElementById('records-total-count').textContent = `全 ${state.records.length} 件`;
+
+      const listEl = document.getElementById('history-list');
+      const recent10 = [...analysis.enriched].reverse().slice(0, 10);
+
+      if (recent10.length === 0) {
+        listEl.innerHTML = `<div class="py-6 text-center text-xs sm:text-sm text-slate-400">まだ記録がありません。</div>`;
         return;
       }
 
-      listEl.innerHTML = reversed.map((r) => {
-        const st = STAGES[r.effectiveStage] || STAGES.follicular;
-        const moodObj = MOOD_OPTIONS.find((m) => m.value === r.mood);
-        return `
-          <div class="p-3.5 rounded-2xl bg-[#FAF7FF] border border-purple-100 flex flex-wrap items-center justify-between gap-3 hover:border-purple-300 transition">
-            <div class="space-y-1">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="text-xs sm:text-sm font-extrabold text-[#4A3B69]">${r.date}</span>
-                ${r.cycleDay ? `<span class="text-[11px] font-bold text-slate-500">(${r.cycleDay}日目)</span>` : ''}
-                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${st.badgeBg} ${st.badgeText}">${st.name}</span>
-                ${r.isPeriodStart ? `<span class="px-2 py-0.5 rounded-full bg-[#EC407A] text-white text-[10px] font-bold">生理開始日</span>` : ''}
-                ${r.isGapDay ? `<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] text-[10px] font-bold">ギャップ検出</span>` : ''}
-              </div>
-              <div class="flex flex-wrap items-center gap-3 text-xs text-slate-600">
-                <span>体温：<strong class="text-[#C2185B]">${typeof r.temperature === 'number' ? `${r.temperature.toFixed(2)}℃` : '--'}</strong></span>
-                <span>睡眠：<strong class="text-[#0284C7]">${typeof r.sleep === 'number' ? `${r.sleep.toFixed(1)}h` : '--'}</strong></span>
-                <span>気分：<strong class="text-[#5E35B1]">${moodObj ? `${moodObj.emoji} ${r.mood}/5` : 'Night未入力'}</strong></span>
-              </div>
-              ${(r.conditionTags?.length > 0 || r.selfCareTags?.length > 0 || r.memo) ? `
-                <div class="text-[11px] text-slate-500 flex flex-wrap items-center gap-1.5 pt-0.5">
-                  ${r.conditionTags?.length > 0 ? `<span class="text-[#AD1457] font-medium">[${escapeHtml(r.conditionTags.join('・'))}]</span>` : ''}
-                  ${r.selfCareTags?.length > 0 ? `<span class="text-[#00695C] font-medium">[${escapeHtml(r.selfCareTags.join('・'))}]</span>` : ''}
-                  ${r.memo ? `<span>${escapeHtml(r.memo)}</span>` : ''}
-                </div>
-              ` : ''}
-            </div>
-            <div class="flex items-center gap-1.5">
-              <button type="button" onclick="editRecord('${r.date}')" class="px-3 py-1.5 rounded-xl bg-white border border-purple-200 text-xs font-bold text-[#5E35B1] hover:bg-purple-50 transition">✎ 編集</button>
-              <button type="button" onclick="deleteRecord('${r.date}')" class="px-2.5 py-1.5 rounded-xl bg-white border border-rose-100 text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition text-xs" title="削除">🗑</button>
-            </div>
-          </div>
-        `;
-      }).join('');
+      listEl.innerHTML = recent10.map((r) => buildRecordItemHTML(r)).join('');
     }
 
     function renderInsights(analysis) {
@@ -1729,14 +1864,33 @@
       }).join('');
     }
 
+    function updateFormWeekdayBadge(dateStr) {
+      const el = document.getElementById('form-date-weekday');
+      if (!el) return;
+      const { label, dayIndex } = getWeekdayInfo(dateStr);
+      if (!label) {
+        el.textContent = '';
+        return;
+      }
+      el.textContent = `(${label})`;
+      if (dayIndex === 0) {
+        el.className = 'px-2 py-0.5 rounded-lg text-xs font-extrabold bg-rose-100 text-rose-700';
+      } else if (dayIndex === 6) {
+        el.className = 'px-2 py-0.5 rounded-lg text-xs font-extrabold bg-sky-100 text-sky-700';
+      } else {
+        el.className = 'px-2 py-0.5 rounded-lg text-xs font-extrabold bg-[#F3E8FF] text-[#5E35B1]';
+      }
+    }
+
     function syncFormFromDate(dateStr) {
       state.formDate = dateStr;
       document.getElementById('record-date').value = dateStr;
+      updateFormWeekdayBadge(dateStr);
       const existing = state.records.find((r) => r.date === dateStr);
 
       if (existing) {
         setPeriodStart(Boolean(existing.isPeriodStart));
-        document.getElementById('input-temp').value = typeof existing.temperature === 'number' ? existing.temperature.toFixed(2) : '36.35';
+        document.getElementById('input-temp').value = typeof existing.temperature === 'number' ? existing.temperature.toFixed(2) : '';
         state.bedTime = existing.bedTime || '23:30';
         state.wakeTime = existing.wakeTime || '06:30';
         document.getElementById('input-bedtime').value = state.bedTime;
@@ -1758,7 +1912,7 @@
         }
       } else {
         setPeriodStart(false);
-        document.getElementById('input-temp').value = '36.35';
+        document.getElementById('input-temp').value = '';
         state.bedTime = '23:30';
         state.wakeTime = '06:30';
         document.getElementById('input-bedtime').value = '23:30';
@@ -1940,6 +2094,11 @@
       }
     }
 
+    function clearTempInput() {
+      const el = document.getElementById('input-temp');
+      if (el) el.value = '';
+    }
+
     function adjustTemp(delta) {
       const el = document.getElementById('input-temp');
       const cur = parseFloat(el.value);
@@ -2067,7 +2226,8 @@
     }
 
     function saveMorning() {
-      const parsedTemp = parseFloat(document.getElementById('input-temp').value);
+      const rawTempVal = (document.getElementById('input-temp').value || '').trim();
+      const parsedTemp = rawTempVal === '' ? NaN : parseFloat(rawTempVal);
       const validTemp = !isNaN(parsedTemp) && parsedTemp >= 34.0 && parsedTemp <= 42.0 ? Number(parsedTemp.toFixed(2)) : null;
 
       const existing = state.records.find((r) => r.date === state.formDate);
@@ -2100,14 +2260,15 @@
       }
       persistRecords(next);
       updateSavedBadgesAndVisibility();
-      showToast(`${state.formDate} の Morning 記録を保存しました ☀️`);
+      showToast(`${formatDateWithWeekday(state.formDate)} の Morning 記録を保存しました ☀️`);
     }
 
     function saveEvening(e) {
       if (e && typeof e.preventDefault === 'function') {
         e.preventDefault();
       }
-      const parsedTemp = parseFloat(document.getElementById('input-temp').value);
+      const rawTempVal = (document.getElementById('input-temp').value || '').trim();
+      const parsedTemp = rawTempVal === '' ? NaN : parseFloat(rawTempVal);
       const validTemp = !isNaN(parsedTemp) && parsedTemp >= 34.0 && parsedTemp <= 42.0 ? Number(parsedTemp.toFixed(2)) : null;
       const existing = state.records.find((r) => r.date === state.formDate);
 
@@ -2120,7 +2281,7 @@
         bedTime: state.bedTime,
         wakeTime: state.wakeTime,
         sleep: Number(state.sleep),
-        morningSaved: Boolean(existing?.morningSaved || validTemp),
+        morningSaved: Boolean(existing?.morningSaved || validTemp !== null),
         eveningSaved: true,
         isPeriodStart: Boolean(state.isPeriodStart),
         manualStageOverride: Boolean(state.manualStageOverride),
@@ -2132,12 +2293,12 @@
 
       const next = [...state.records.filter((r) => r.date !== state.formDate), entry];
       state.selectedNavDate = state.formDate;
-      state.morningSavedFlag = true;
+      state.morningSavedFlag = Boolean(entry.morningSaved);
       state.eveningSavedFlag = true;
       state.eveningSectionOpen = true;
       persistRecords(next);
       updateSavedBadgesAndVisibility();
-      showToast(`${state.formDate} の Night 記録を保存しました 🌙`);
+      showToast(`${formatDateWithWeekday(state.formDate)} の Night 記録を保存しました 🌙`);
     }
 
     function editRecord(dateStr) {
@@ -2153,7 +2314,7 @@
     function deleteRecord(dateStr) {
       const next = state.records.filter((r) => r.date !== dateStr);
       persistRecords(next);
-      showToast(`${dateStr} の記録を削除しました`);
+      showToast(`${formatDateWithWeekday(dateStr)} の記録を削除しました`);
     }
 
     function clearAllRecords() {
@@ -2167,9 +2328,10 @@
 
     function exportCSV() {
       const analysis = analyzeRecords(state.records);
-      const header = ['日付', '周期日数', '体の時期', '生理開始日', '基礎体温', '睡眠時間', '気分(1-5)', '元気度(1-5)', '体調サイン', 'セルフケア', 'メモ'];
+      const header = ['日付', '曜日', '周期日数', '体の時期', '生理開始日', '基礎体温', '睡眠時間', '気分(1-5)', '元気度(1-5)', '体調サイン', 'セルフケア', 'メモ'];
       const rows = analysis.enriched.map((r) => [
         r.date,
+        getWeekdayInfo(r.date).label,
         r.cycleDay || '',
         STAGES[r.effectiveStage]?.name || '',
         r.isPeriodStart ? 'はい' : '',
